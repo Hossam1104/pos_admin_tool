@@ -3,7 +3,9 @@ Data models for application settings
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict
+from typing import List, Dict, Optional
+import os
+from pathlib import Path
 
 
 @dataclass
@@ -13,7 +15,7 @@ class AppSettings:
     # SQL Configuration
     sql_instance: str = "."
     sql_user: str = "sa"
-    sql_password: str = "P@ssw0rd"
+    sql_password: Optional[str] = None  # Will be encrypted
 
     # Databases
     databases: List[str] = field(
@@ -33,18 +35,24 @@ class AppSettings:
     folders_to_delete: List[str] = field(
         default_factory=lambda: [
             r"C:\Workspaces",
-            r"C:\ProgramData\Logs",
-            r"C:\ProgramData\Cashier",
-            r"C:\ProgramData\Branch",
-            r"C:\ProgramData\DBS",
-            r"C:\ProgramData\RMS_Plus",
-            r"C:\ProgramData\RMS_Plus_Downloads",
-            r"C:\ProgramData\RMS_Plus_ReleaseRepo",
+            str(Path(os.environ.get("ProgramData", r"C:\ProgramData")) / "Logs"),
+            str(Path(os.environ.get("ProgramData", r"C:\ProgramData")) / "Cashier"),
+            str(Path(os.environ.get("ProgramData", r"C:\ProgramData")) / "Branch"),
+            str(Path(os.environ.get("ProgramData", r"C:\ProgramData")) / "DBS"),
+            str(Path(os.environ.get("ProgramData", r"C:\ProgramData")) / "RMS_Plus"),
+            str(
+                Path(os.environ.get("ProgramData", r"C:\ProgramData"))
+                / "RMS_Plus_Downloads"
+            ),
+            str(
+                Path(os.environ.get("ProgramData", r"C:\ProgramData"))
+                / "RMS_Plus_ReleaseRepo"
+            ),
         ]
     )
 
     # Backup configuration
-    backup_folder: str = r"D:\DB Backups"
+    backup_folder: str = str(Path(os.environ.get("SystemDrive", "C:")) / "DB Backups")
 
     # AppSettings files
     appsettings_files: List[Dict[str, str]] = field(

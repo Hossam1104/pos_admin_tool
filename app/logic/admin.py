@@ -28,15 +28,15 @@ class AdminManager:
             if getattr(sys, "frozen", False):
                 # Running as PyInstaller executable
                 exe_path = sys.executable
+                params = " ".join([f'"{arg}"' for arg in sys.argv[1:]])
             else:
                 # Running as Python script
                 exe_path = sys.executable
                 script_path = Path(__file__).parent.parent / "main.py"
-                if script_path.exists():
-                    exe_path = f'"{exe_path}" "{script_path}"'
 
-            # Parameters for ShellExecute
-            params = " ".join([f'"{arg}"' for arg in sys.argv[1:]])
+                # Parameters include the script path and any arguments
+                args = " ".join([f'"{arg}"' for arg in sys.argv[1:]])
+                params = f'"{script_path}" {args}'
 
             # Request admin privileges
             ctypes.windll.shell32.ShellExecuteW(

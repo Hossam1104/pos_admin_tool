@@ -3,11 +3,10 @@
 POS Admin Tool - Main Application Entry Point
 """
 import sys
-import os
 from pathlib import Path
 
 # Add the app directory to the path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QTimer
@@ -59,4 +58,22 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as e:
+        # Emergency logging if normal logging fails or isn't set up
+        error_msg = f"Critical application error: {e}"
+        print(error_msg, file=sys.stderr)
+
+        # Try to log to file
+        try:
+            from app.utils.logger import setup_logger
+            import traceback
+
+            logger = setup_logger()
+            logger.critical("Uncaught exception:")
+            logger.critical(traceback.format_exc())
+        except Exception:
+            pass
+
+        sys.exit(1)

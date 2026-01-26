@@ -1,8 +1,7 @@
 """
-Build script for PyInstaller
+Build script for PyInstaller with all dependencies
 """
 
-import sys
 from pathlib import Path
 import PyInstaller.__main__
 
@@ -14,6 +13,10 @@ def build_exe():
     # Get the main script path
     main_script = Path(__file__).parent / "app" / "main.py"
 
+    # Additional data files
+    assets_dir = Path(__file__).parent / "assets"
+    config_dir = Path(__file__).parent / "config"
+
     # PyInstaller arguments
     args = [
         str(main_script),
@@ -22,10 +25,15 @@ def build_exe():
         "--windowed",  # Hide console window
         "--clean",
         "--noconfirm",
-        "--add-data=assets;assets",
-        "--add-data=config;config",
+        f"--add-data={assets_dir};assets",
+        f"--add-data={config_dir};config",
         "--icon=assets/icons/app_icon.ico",
         "--hidden-import=PySide6",
+        "--hidden-import=PySide6.QtCore",
+        "--hidden-import=PySide6.QtGui",
+        "--hidden-import=PySide6.QtWidgets",
+        "--hidden-import=win32crypt",
+        "--hidden-import=win32cryptcon",
         "--hidden-import=zipfile",
         "--hidden-import=shutil",
         "--hidden-import=json",
@@ -38,6 +46,10 @@ def build_exe():
         "--hidden-import=time",
         "--hidden-import=logging",
         "--hidden-import=datetime",
+        "--hidden-import=base64",
+        "--hidden-import=dataclasses",
+        "--hidden-import=typing",
+        "--hidden-import=enum",
     ]
 
     # Run PyInstaller
