@@ -25,7 +25,6 @@ from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
     QApplication,
-    QSizePolicy,
     QScrollArea,
 )
 from PySide6.QtCore import Qt, QTimer, Signal, QThread, QObject, QUrl
@@ -562,6 +561,14 @@ class ConfigurationPanel(QGroupBox):
         btn_save.clicked.connect(self.save)
 
         action_layout = QHBoxLayout()
+        # Import Button (New)
+        btn_import = QPushButton("Import from RMS+")
+        btn_import.setMinimumHeight(40)
+        btn_import.setStyleSheet(
+            f"background-color: {COLORS['PRIMARY']}; color: white; border-radius: 4px;"
+        )
+        btn_import.clicked.connect(self.import_settings)
+
         # Verify Button (New)
         btn_verify = QPushButton("Verify Branch")
         btn_verify.setMinimumHeight(40)
@@ -570,6 +577,7 @@ class ConfigurationPanel(QGroupBox):
         )
         btn_verify.clicked.connect(self.verify_branch)
 
+        action_layout.addWidget(btn_import)
         action_layout.addWidget(btn_verify)
         action_layout.addStretch()
         action_layout.addWidget(btn_test)
@@ -579,6 +587,34 @@ class ConfigurationPanel(QGroupBox):
 
         # Ensure row 6 is not squashed
         layout.setRowStretch(6, 0)
+
+    def import_settings(self):
+        """Import settings from RMS+ Info file"""
+        reply = QMessageBox.question(
+            self,
+            "Import Settings",
+            "This will overwrite your current configuration with values from RMS+. Continue?",
+            QMessageBox.Yes | QMessageBox.No,
+        )
+
+        if reply == QMessageBox.Yes:
+            success, result = self.controller.batch_runner.import_rms_settings()
+            if success and isinstance(result, dict):
+                # Update Controller Settings
+                for k, v in result.items():
+                    if hasattr(self.controller.settings, k):
+                        setattr(self.controller.settings, k, v)
+
+                # Refresh UI fully from updated settings
+                self.load_state(self.controller.settings)
+
+                QMessageBox.information(
+                    self,
+                    "Import Success",
+                    "Settings imported from RMS+. Please Click 'Save' to persist.",
+                )
+            else:
+                QMessageBox.warning(self, "Import Failed", f"{result}")
 
     def update_server_status(self, is_connected: bool, text: str):
         color = COLORS["SUCCESS"] if is_connected else COLORS["DANGER"]

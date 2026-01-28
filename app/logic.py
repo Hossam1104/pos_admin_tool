@@ -164,6 +164,45 @@ class BatchRunner:
 
         return self.run_command(cmd, timeout=timeout)
 
+    def import_rms_settings(self) -> Tuple[bool, object]:
+        """Import settings from RMSInfo.json"""
+        import json
+        from pathlib import Path
+
+        rms_path = Path(
+            self.config.get("rms_info_path", r"C:\ProgramData\RMS_Plus\RMSInfo.json")
+        )
+        if not rms_path.exists():
+            return False, f"RMS Info file not found at: {rms_path}"
+
+        try:
+            with open(rms_path, "r", encoding="utf-8-sig") as f:
+                data = json.load(f)
+
+            updates = {}
+
+            # Map Fields
+            updates["branch_code"] = data.get("BranchCode", "")
+            updates["pos_number"] = str(data.get("POSNumber", ""))
+            updates["sql_instance"] = data.get("ServerName", ".")
+            updates["sql_user"] = data.get("UserName", "sa")
+            updates["sql_password"] = data.get("Password", "")
+
+            # New Identifiers
+            updates["tenant_id"] = int(data.get("TenantId", 0))
+            updates["branch_id"] = int(data.get("MainServerBranchId", 0))
+            updates["pos_id"] = int(data.get("MainServerPosId", 0))
+
+            # Client Logic
+            main_ip = data.get("MainServerIP", "")
+            if "10.10.10.181" in main_ip:
+                updates["client_name"] = "DBS_MAIN"
+
+            return True, updates
+
+        except Exception as e:
+            return False, f"Error parsing RMSInfo: {str(e)}"
+
     # ===== API UNINSTALL ACTIONS =====
 
     def _call_rms_api(

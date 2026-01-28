@@ -96,3 +96,9 @@ class AppSettings:
     # Path Configuration (Standardized)
     release_path: str = r"C:\ProgramData\RMS_Plus\ReleaseNumber.txt"
     env_config_path: str = r"C:\Workspaces\DBS\RMS\RMS.CashierServer\appsettings.json"
+    rms_info_path: str = r"C:\ProgramData\RMS_Plus\RMSInfo.json"
+
+    # RMS+ Identifiers
+    tenant_id: int = 0
+    branch_id: int = 0
+    pos_id: int = 0

@@ -930,19 +930,28 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Client Code</label>
-                            <input type="text" class="form-control" id="clientCode" value="DBS_MAIN"
-                                placeholder="Used in backup naming convention">
+                            <label class="form-label">Client / Branch Info</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" class="form-control" id="clientCode" value="DBS_MAIN"
+                                    placeholder="Client">
+                                <input type="text" class="form-control" id="branchCode" value="P001"
+                                    placeholder="Branch">
+                                <input type="text" class="form-control" id="posNumber" value="1" placeholder="POS#"
+                                    style="width: 80px;">
+                            </div>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Auto-discovery</label>
-                            <div style="display: flex; gap: 10px;">
+                            <label class="form-label">Auto-discovery & Validation</label>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                                 <button class="btn btn-primary" id="discoverSql">
-                                    <i class="fas fa-search"></i> Discover SQL Instances
+                                    <i class="fas fa-search"></i> Discover SQL
+                                </button>
+                                <button class="btn btn-primary" id="verifyBranch">
+                                    <i class="fas fa-check-double"></i> Verify Branch
                                 </button>
                                 <button class="btn btn-success" id="testConnection">
-                                    <i class="fas fa-plug"></i> Test Connection
+                                    <i class="fas fa-plug"></i> Test DB
                                 </button>
                             </div>
                         </div>
@@ -1314,6 +1323,28 @@
                                     <input type="checkbox" id="resetServiceStates">
                                     <label for="resetServiceStates"><strong>Reset Service States</strong> - Clears
                                         service error states</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" style="color: var(--danger-zone); font-weight: 700;">Uninstall
+                                APIs</label>
+                            <div
+                                style="border: 1px solid #ffcccc; border-radius: 6px; padding: 15px; background-color: #fff9f9;">
+                                <div style="margin-bottom: 15px;">
+                                    <button class="btn btn-danger btn-sm"
+                                        style="width: 100%; text-align: left; margin-bottom: 5px;">
+                                        <i class="fas fa-trash"></i> Uninstall Branch
+                                    </button>
+                                    <small style="color: #666;">Deregisters branch from Main Server</small>
+                                </div>
+                                <div>
+                                    <button class="btn btn-danger btn-sm"
+                                        style="width: 100%; text-align: left; margin-bottom: 5px;">
+                                        <i class="fas fa-trash"></i> Uninstall POS
+                                    </button>
+                                    <small style="color: #666;">Deregisters this POS terminal</small>
                                 </div>
                             </div>
                         </div>
