@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBS | POS Admin Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --danger-zone: #c0392b;
+            --sidebar-width: 280px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary) 0%, #1a2530 100%);
+            color: white;
+            padding: 25px 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: var(--secondary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .logo-subtext {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        .nav-menu {
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            padding: 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background-color: var(--secondary);
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            margin-right: 12px;
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-text {
+            font-size: 16px;
+        }
+
+        .admin-badge {
+            background-color: var(--danger);
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: auto;
+        }
+
+        .footer-info {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .page-subtitle {
+            color: var(--gray);
+            margin-top: 5px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .user-icon {
+            background-color: var(--secondary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+
+        .user-text {
+            font-weight: 600;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: var(--gray);
+            margin-top: 2px;
+        }
+
+        .content-panel {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .content-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid var(--secondary);
+        }
+
+        .card.danger-zone {
+            border-left-color: var(--danger-zone);
+            background-color: #fff9f9;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+        }
+
+        .card-title i {
+            margin-right: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: border 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+
+        .col {
+            flex: 1;
+            padding: 0 10px;
+            min-width: 300px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #e67e22;
+            transform: translateY(-2px);
+        }
+
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .service-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid var(--gray);
+            transition: all 0.3s;
+        }
+
+        .service-card.running {
+            border-left-color: var(--success);
+        }
+
+        .service-card.stopped {
+            border-left-color: var(--danger);
+        }
+
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .service-name {
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .service-status {
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .status-running {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+
+        .status-stopped {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+
+        .service-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-running .status-indicator {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .status-stopped .status-indicator {
+            background-color: var(--danger);
+        }
+
+        .log-panel {
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 30px;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .log-time {
+            color: #3498db;
+        }
+
+        .log-info {
+            color: #27ae60;
+        }
+
+        .log-warning {
+            color: #f39c12;
+        }
+
+        .log-error {
+            color: #e74c3c;
+        }
+
+        .danger-zone-header {
+            background-color: var(--danger-zone);
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            margin: -25px -25px 20px -25px;
+            display: flex;
+            align-items: center;
+        }
+
+        .danger-zone-header i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .modal {
+            background-color: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-title {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .modal-body {
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--success);
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-success {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+
+        .badge-danger {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+
+        .badge-warning {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .connection-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .connection-connected {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .connection-disconnected {
+            background-color: var(--danger);
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 13px;
+            font-weight: normal;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .alert-warning {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: #b06d0c;
+            border-left: 5px solid var(--warning);
+        }
+
+        .alert-warning i {
+            color: var(--warning);
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .database-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .database-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .database-item:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 250px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 15px;
+            }
+
+            .nav-menu {
+                display: flex;
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+
+            .nav-item {
+                flex-shrink: 0;
+                margin-bottom: 0;
+                margin-right: 10px;
+            }
+
+            .logo-container {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="logo">DBS</div>
+            <div>
+                <div class="logo-text">DBS | POS Admin</div>
+                <div class="logo-subtext">Production v1.0</div>
+            </div>
+        </div>
+
+        <div class="nav-menu">
+            <div class="nav-item active" data-panel="dashboard">
+                <div class="nav-icon"><i class="fas fa-tachometer-alt"></i></div>
+                <div class="nav-text">Dashboard</div>
+            </div>
+
+            <div class="nav-item" data-panel="configuration">
+                <div class="nav-icon"><i class="fas fa-cog"></i></div>
+                <div class="nav-text">Configuration</div>
+            </div>
+
+            <div class="nav-item" data-panel="services">
+                <div class="nav-icon"><i class="fas fa-server"></i></div>
+                <div class="nav-text">Service Control</div>
+                <div class="admin-badge">ADMIN</div>
+            </div>
+
+            <div class="nav-item" data-panel="backup">
+                <div class="nav-icon"><i class="fas fa-database"></i></div>
+                <div class="nav-text">Backup</div>
+            </div>
+
+            <div class="nav-item" data-panel="restore">
+                <div class="nav-icon"><i class="fas fa-history"></i></div>
+                <div class="nav-text">Restore</div>
+                <div class="admin-badge">ADMIN</div>
+            </div>
+
+            <div class="nav-item" data-panel="dangerzone">
+                <div class="nav-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="nav-text">Danger Zone</div>
+                <div class="admin-badge">CRITICAL</div>
+            </div>
+
+            <div class="nav-item" data-panel="logs">
+                <div class="nav-icon"><i class="fas fa-clipboard-list"></i></div>
+                <div class="nav-text">Logs & Monitoring</div>
+            </div>
+
+            <div class="nav-item" data-panel="documentation">
+                <div class="nav-icon"><i class="fas fa-book"></i></div>
+                <div class="nav-text">Documentation</div>
+            </div>
+        </div>
+
+        <div class="footer-info">
+            <div><i class="fas fa-shield-alt"></i> Requires Administrator</div>
+            <div><i class="fas fa-desktop"></i> Windows 10/11 / Server 2016+</div>
+            <div><i class="fas fa-database"></i> SQL Server 2014+</div>
+            <div style="margin-top: 15px;">© 2026 Digital Business Systems</div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1 class="page-title">RMS+ POS Admin Tool</h1>
+                <div class="page-subtitle">Centralized management utility for RMS+ POS systems</div>
+            </div>
+
+            <div class="user-info">
+                <div class="user-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div>
+                    <div class="user-text">Administrator</div>
+                    <div class="user-role">Elevated Privileges Active</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Panel -->
+        <div id="dashboard" class="content-panel active">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div><strong>Important:</strong> This tool performs critical operations. Always verify your actions and
+                    ensure you have valid backups before proceeding with destructive operations.</div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="card">
+                        <div class="card-title">
+                            <i class="fas fa-info-circle"></i> Project Overview
+                        </div>
+                        <p>The <strong>RMS+ POS Admin Tool</strong> is a centralized utility designed specifically for
+                            Digital Business Systems (DBS) to manage execution-critical operations for POS and RMS
+                            environments.</p>
+                        <p>It provides a robust, GUI-based interface for database lifecycle management, service
+                            monitoring, and system maintenance.</p>
+
+                        <div style="margin-top: 20px;">
+                            <div class="connection-status">
+                                <div class="connection-dot connection-connected"></div>
+                                <span>SQL Connection: <strong>Active</strong> (.\MSSQLSERVER)</span>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <span class="status-badge badge-success">6 Services Monitored</span>
+                                <span class="status-badge badge-success" style="margin-left: 10px;">Configuration
+                                    Loaded</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <i class="fas fa-bolt"></i> Quick Actions
+                        </div>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                            <button class="btn btn-primary" id="quickStartServices">
+                                <i class="fas fa-play"></i> Start All Services
+                            </button>
+                            <button class="btn btn-warning" id="quickStopServices">
+                                <i class="fas fa-stop"></i> Stop All Services
+                            </button>
+                            <button class="btn btn-success" id="quickBackup">
+                                <i class="fas fa-save"></i> Quick Backup
+                            </button>
+                            <button class="btn btn-primary" id="quickTestConnection">
+                                <i class="fas fa-plug"></i> Test Connection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col">
+                    <div class="card">
+                        <div class="card-title">
+                            <i class="fas fa-chart-bar"></i> System Status
+                        </div>
+
+                        <div class="service-grid">
+                            <div class="service-card running">
+                                <div class="service-header">
+                                    <div class="service-name">RMS Branch Service</div>
+                                    <div class="service-status status-running">
+                                        <span class="status-indicator"></span> Running
+                                    </div>
+                                </div>
+                                <div>Manages branch-level operations and data sync</div>
+                                <div class="service-actions">
+                                    <button class="btn btn-danger btn-sm" style="padding: 8px 12px; font-size: 13px;">
+                                        <i class="fas fa-stop"></i> Stop
+                                    </button>
+                                    <button class="btn btn-warning btn-sm" style="padding: 8px 12px; font-size: 13px;">
+                                        <i class="fas fa-redo"></i> Restart
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="service-card running">
+                                <div class="service-header">
+                                    <div class="service-name">RMS Cashier Service</div>
+                                    <div class="service-status status-running">
+                                        <span class="status-indicator"></span> Running
+                                    </div>
+                                </div>
+                                <div>Handles POS transaction processing</div>
+                                <div class="service-actions">
+                                    <button class="btn btn-danger btn-sm" style="padding: 8px 12px; font-size: 13px;">
+                                        <i class="fas fa-stop"></i> Stop
+                                    </button>
+                                    <button class="btn btn-warning btn-sm" style="padding: 8px 12px; font-size: 13px;">
+                                        <i class="fas fa-redo"></i> Restart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 85%"></div>
+                        </div>
+                        <div style="text-align: center; margin-top: 8px; font-size: 14px;">System Health: 85%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-history"></i> Recent Activities
+                </div>
+                <div class="log-panel" id="recentLogs">
+                    <div class="log-entry">
+                        <span class="log-time">[14:32:45]</span>
+                        <span class="log-info">INFO:</span> Application started with administrator privileges
+                    </div>
+                    <div class="log-entry">
+                        <span class="log-time">[14:33:10]</span>
+                        <span class="log-info">INFO:</span> SQL Connection established to .\MSSQLSERVER
+                    </div>
+                    <div class="log-entry">
+                        <span class="log-time">[14:33:22]</span>
+                        <span class="log-info">INFO:</span> Service status check completed - 4 running, 2 stopped
+                    </div>
+                    <div class="log-entry">
+                        <span class="log-time">[14:34:05]</span>
+                        <span class="log-info">INFO:</span> Configuration loaded from config/settings.json
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Panel -->
+        <div id="configuration" class="content-panel">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-cog"></i> Configuration Settings
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label class="form-label">SQL Server Instance</label>
+                            <input type="text" class="form-control" id="sqlInstance" value=".\MSSQLSERVER"
+                                placeholder="e.g., .\MSSQLSERVER or SERVER\INSTANCE">
+                            <div class="tooltip" style="margin-top: 5px;">
+                                <i class="fas fa-info-circle" style="color: var(--secondary);"></i>
+                                <span class="tooltip-text">Enter your SQL Server instance name. Use .\ for default local
+                                    instance or SERVER\INSTANCE for named instances.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">MDF Path (Data Files)</label>
+                            <div style="display: flex;">
+                                <input type="text" class="form-control" id="mdfPath" value="D:\DB Backups\MDF"
+                                    style="border-right: 0; border-radius: 6px 0 0 6px;">
+                                <button class="btn btn-primary" style="border-radius: 0 6px 6px 0; padding: 12px 15px;">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">LDF Path (Log Files)</label>
+                            <div style="display: flex;">
+                                <input type="text" class="form-control" id="ldfPath" value="D:\DB Backups\LDF"
+                                    style="border-right: 0; border-radius: 6px 0 0 6px;">
+                                <button class="btn btn-primary" style="border-radius: 0 6px 6px 0; padding: 12px 15px;">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="form-group">
+                            <label class="form-label">Backup Path</label>
+                            <div style="display: flex;">
+                                <input type="text" class="form-control" id="backupPath" value="D:\DB Backups"
+                                    style="border-right: 0; border-radius: 6px 0 0 6px;">
+                                <button class="btn btn-primary" style="border-radius: 0 6px 6px 0; padding: 12px 15px;">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Client Code</label>
+                            <input type="text" class="form-control" id="clientCode" value="DBS_MAIN"
+                                placeholder="Used in backup naming convention">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Auto-discovery</label>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-primary" id="discoverSql">
+                                    <i class="fas fa-search"></i> Discover SQL Instances
+                                </button>
+                                <button class="btn btn-success" id="testConnection">
+                                    <i class="fas fa-plug"></i> Test Connection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Available Databases</label>
+                    <div class="database-list" id="databaseList">
+                        <div class="database-item">
+                            <span>RMS_BranchDB</span>
+                            <span class="status-badge badge-success">Online</span>
+                        </div>
+                        <div class="database-item">
+                            <span>RMS_CashierDB</span>
+                            <span class="status-badge badge-success">Online</span>
+                        </div>
+                        <div class="database-item">
+                            <span>POS_Inventory</span>
+                            <span class="status-badge badge-success">Online</span>
+                        </div>
+                        <div class="database-item">
+                            <span>Backup_Archive</span>
+                            <span class="status-badge badge-warning">Restoring</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px;">
+                    <button class="btn btn-warning" id="loadDefaults">
+                        <i class="fas fa-undo"></i> Load Defaults
+                    </button>
+                    <button class="btn btn-success" id="saveConfig">
+                        <i class="fas fa-save"></i> Save Configuration
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-info-circle"></i> Configuration Notes
+                </div>
+                <ul style="padding-left: 20px; line-height: 1.8;">
+                    <li>Configuration is persisted in <code>config/settings.json</code> between sessions</li>
+                    <li>Auto-discovery scans the network for available SQL instances (requires network permissions)</li>
+                    <li>Backup naming follows: <code>[Client]_[Type]_[Timestamp].bak</code> convention</li>
+                    <li>All paths must be accessible with the current user privileges</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Service Control Panel -->
+        <div id="services" class="content-panel">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-server"></i> Windows Service Management
+                </div>
+                <p style="margin-bottom: 20px;">Monitor and control RMS+ POS services in real-time. Services are checked
+                    every 10 seconds.</p>
+
+                <div class="service-grid" id="serviceGrid">
+                    <!-- Services will be dynamically populated here -->
+                </div>
+
+                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+                    <button class="btn btn-success" id="startAllServices">
+                        <i class="fas fa-play"></i> Start All Services
+                    </button>
+                    <button class="btn btn-danger" id="stopAllServices">
+                        <i class="fas fa-stop"></i> Stop All Services
+                    </button>
+                    <button class="btn btn-warning" id="restartAllServices">
+                        <i class="fas fa-redo"></i> Restart All Services
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-info-circle"></i> Service Information
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <h4>Critical Services</h4>
+                        <ul style="padding-left: 20px; line-height: 1.8; margin-top: 10px;">
+                            <li><strong>RmsBranchSrv</strong> - Core branch operations</li>
+                            <li><strong>RmsCashierSrv</strong> - POS transaction processing</li>
+                            <li><strong>POSPrintService</strong> - Receipt and report printing</li>
+                            <li><strong>InventorySync</strong> - Stock level synchronization</li>
+                        </ul>
+                    </div>
+                    <div class="col">
+                        <h4>Service Dependencies</h4>
+                        <ul style="padding-left: 20px; line-height: 1.8; margin-top: 10px;">
+                            <li>Backup operations require services to be stopped</li>
+                            <li>Restore operations require exclusive database access</li>
+                            <li>Some services depend on SQL Server running</li>
+                            <li>Cleanup operations will stop all services</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Backup Panel -->
+        <div id="backup" class="content-panel">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-database"></i> Database Backup
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label class="form-label">Select Database(s)</label>
+                            <div style="border: 1px solid #ddd; border-radius: 6px; padding: 15px;">
+                                <div style="margin-bottom: 10px;">
+                                    <input type="checkbox" id="backupBranch" checked>
+                                    <label for="backupBranch">RMS_BranchDB (Branch Operations)</label>
+                                </div>
+                                <div style="margin-bottom: 10px;">
+                                    <input type="checkbox" id="backupCashier" checked>
+                                    <label for="backupCashier">RMS_CashierDB (POS Transactions)</label>
+                                </div>
+                                <div style="margin-bottom: 10px;">
+                                    <input type="checkbox" id="backupInventory">
+                                    <label for="backupInventory">POS_Inventory (Stock Data)</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" id="backupConfig">
+                                    <label for="backupConfig">Configuration Files</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Backup Type</label>
+                            <select class="form-control" id="backupType">
+                                <option value="full">Full Backup</option>
+                                <option value="differential">Differential Backup</option>
+                                <option value="log">Transaction Log Backup</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="form-group">
+                            <label class="form-label">Backup Destination</label>
+                            <div style="display: flex;">
+                                <input type="text" class="form-control" id="backupDestination" value="D:\DB Backups"
+                                    style="border-right: 0; border-radius: 6px 0 0 6px;">
+                                <button class="btn btn-primary" style="border-radius: 0 6px 6px 0; padding: 12px 15px;">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Backup Name Preview</label>
+                            <input type="text" class="form-control" id="backupNamePreview"
+                                value="DBS_MAIN_Full_20231115_143245.bak" readonly style="background-color: #f8f9fa;">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Compression</label>
+                            <select class="form-control" id="backupCompression">
+                                <option value="high">High Compression</option>
+                                <option value="normal" selected>Normal Compression</option>
+                                <option value="none">No Compression</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px;">
+                    <button class="btn btn-warning" id="validateBackup">
+                        <i class="fas fa-check-circle"></i> Validate Settings
+                    </button>
+                    <button class="btn btn-success" id="executeBackup">
+                        <i class="fas fa-play-circle"></i> Execute Backup
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-history"></i> Recent Backups
+                </div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background-color: #f8f9fa;">
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Backup Name</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Date</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Size</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee;">DBS_MAIN_Full_20231114_093245.bak
+                            </td>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee;">2023-11-14 09:32</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee;">2.4 GB</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee;"><span
+                                    class="status-badge badge-success">Completed</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee;">DBS_MAIN_Diff_20231115_101512.bak
+                            </td>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee;">2023-11-15 10:15</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee;">450 MB</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee;"><span
+                                    class="status-badge badge-success">Completed</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Restore Panel -->
+        <div id="restore" class="content-panel">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div><strong>Warning:</strong> Restore operations overwrite existing databases. Always ensure you have a
+                    valid backup before proceeding. This operation cannot be undone.</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-history"></i> Database Restore
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label class="form-label">Target Database</label>
+                            <select class="form-control" id="restoreTarget">
+                                <option value="branch">RMS_BranchDB</option>
+                                <option value="cashier">RMS_CashierDB</option>
+                                <option value="inventory">POS_Inventory</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Backup File</label>
+                            <div style="display: flex;">
+                                <input type="text" class="form-control" id="restoreFile" placeholder="Select .bak file"
+                                    style="border-right: 0; border-radius: 6px 0 0 6px;">
+                                <button class="btn btn-primary" style="border-radius: 0 6px 6px 0; padding: 12px 15px;">
+                                    <i class="fas fa-file-upload"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Restore Mode</label>
+                            <select class="form-control" id="restoreMode">
+                                <option value="overwrite">Overwrite Existing (WITH REPLACE)</option>
+                                <option value="move">Move Files (WITH MOVE)</option>
+                                <option value="recovery">With Recovery</option>
+                                <option value="norecovery">No Recovery (Log Shipping)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="form-group">
+                            <label class="form-label">New MDF Path (Optional)</label>
+                            <div style="display: flex;">
+                                <input type="text" class="form-control" id="newMdfPath"
+                                    placeholder="Leave blank to use original location"
+                                    style="border-right: 0; border-radius: 6px 0 0 6px;">
+                                <button class="btn btn-primary" style="border-radius: 0 6px 6px 0; padding: 12px 15px;">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">New LDF Path (Optional)</label>
+                            <div style="display: flex;">
+                                <input type="text" class="form-control" id="newLdfPath"
+                                    placeholder="Leave blank to use original location"
+                                    style="border-right: 0; border-radius: 6px 0 0 6px;">
+                                <button class="btn btn-primary" style="border-radius: 0 6px 6px 0; padding: 12px 15px;">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div style="display: flex; align-items: center;">
+                                <input type="checkbox" id="forceRestore" style="margin-right: 10px;">
+                                <label for="forceRestore" style="font-weight: 600;">Force restore even if database is in
+                                    use</label>
+                            </div>
+                            <div style="font-size: 13px; color: #777; margin-top: 5px;">Will disconnect all active
+                                connections before restore</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px;">
+                    <button class="btn btn-warning" id="validateRestore">
+                        <i class="fas fa-check-circle"></i> Validate Restore
+                    </button>
+                    <button class="btn btn-danger" id="executeRestore">
+                        <i class="fas fa-play-circle"></i> Execute Restore
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone Panel -->
+        <div id="dangerzone" class="content-panel">
+            <div class="card danger-zone">
+                <div class="danger-zone-header">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>DANGER ZONE - Destructive Operations</div>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <p><strong>Warning:</strong> The operations in this section are irreversible and can cause service
+                        disruption. Use only when absolutely necessary.</p>
+                    <p>These operations require explicit confirmation and are logged for audit purposes.</p>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label class="form-label" style="color: var(--danger-zone); font-weight: 700;">Cleanup
+                                Operations</label>
+                            <div
+                                style="border: 1px solid #ffcccc; border-radius: 6px; padding: 15px; background-color: #fff9f9;">
+                                <div style="margin-bottom: 15px;">
+                                    <input type="checkbox" id="cleanupTempFiles">
+                                    <label for="cleanupTempFiles"><strong>Clear Temporary Files</strong> - Deletes cache
+                                        and temp files</label>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <input type="checkbox" id="cleanupLogs">
+                                    <label for="cleanupLogs"><strong>Clear Log Files</strong> - Deletes application
+                                        logs</label>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <input type="checkbox" id="stopAllServicesDanger">
+                                    <label for="stopAllServicesDanger"><strong>Force Stop All Services</strong> -
+                                        Immediately stops RMS+ services</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" id="releaseFileLocks">
+                                    <label for="releaseFileLocks"><strong>Release File Locks</strong> - Unlocks database
+                                        files held by processes</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" style="color: var(--danger-zone); font-weight: 700;">Reset
+                                Operations</label>
+                            <div
+                                style="border: 1px solid #ffcccc; border-radius: 6px; padding: 15px; background-color: #fff9f9;">
+                                <div style="margin-bottom: 15px;">
+                                    <input type="checkbox" id="resetConfig">
+                                    <label for="resetConfig"><strong>Reset Configuration</strong> - Restores default
+                                        settings</label>
+                                </div>
+                                <div>
+                                    <input type="checkbox" id="resetServiceStates">
+                                    <label for="resetServiceStates"><strong>Reset Service States</strong> - Clears
+                                        service error states</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="form-group">
+                            <label class="form-label">Confirmation</label>
+                            <p style="margin-bottom: 15px;">To confirm you understand the consequences, type
+                                <strong>"CONFIRM DANGER ZONE"</strong> in the field below:
+                            </p>
+                            <input type="text" class="form-control" id="dangerConfirmation"
+                                placeholder="Type the confirmation phrase">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Emergency Contact</label>
+                            <input type="text" class="form-control" id="emergencyContact"
+                                placeholder="Enter your name for audit log">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Reason for Operation</label>
+                            <textarea class="form-control" id="dangerReason" rows="3"
+                                placeholder="Explain why you are performing these operations"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: center; margin-top: 30px;">
+                    <button class="btn btn-danger" id="executeDanger" style="padding: 15px 30px; font-size: 18px;"
+                        disabled>
+                        <i class="fas fa-exclamation-triangle"></i> EXECUTE DANGER ZONE OPERATIONS
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs Panel -->
+        <div id="logs" class="content-panel">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-clipboard-list"></i> System Logs & Monitoring
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                    <div>
+                        <button class="btn btn-primary" id="refreshLogs">
+                            <i class="fas fa-sync-alt"></i> Refresh Logs
+                        </button>
+                        <button class="btn btn-warning" id="clearLogs" style="margin-left: 10px;">
+                            <i class="fas fa-trash-alt"></i> Clear Logs
+                        </button>
+                    </div>
+                    <div>
+                        <select class="form-control" id="logLevel" style="width: 200px; display: inline-block;">
+                            <option value="all">All Logs</option>
+                            <option value="info">Info Only</option>
+                            <option value="warning">Warnings & Errors</option>
+                            <option value="error">Errors Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="log-panel" id="systemLogs" style="max-height: 400px;">
+                    <!-- Logs will be dynamically populated here -->
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-chart-line"></i> Performance Monitoring
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <h4>Service Uptime</h4>
+                        <ul style="padding-left: 20px; line-height: 1.8; margin-top: 10px;">
+                            <li>RMS Branch Service: <strong>14 days, 6 hours</strong></li>
+                            <li>RMS Cashier Service: <strong>7 days, 12 hours</strong></li>
+                            <li>SQL Server: <strong>30 days, 2 hours</strong></li>
+                        </ul>
+                    </div>
+                    <div class="col">
+                        <h4>Last 24 Hours</h4>
+                        <ul style="padding-left: 20px; line-height: 1.8; margin-top: 10px;">
+                            <li>Backups performed: <strong>2</strong></li>
+                            <li>Service restarts: <strong>1</strong></li>
+                            <li>Errors logged: <strong>0</strong></li>
+                            <li>Warnings: <strong>3</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation Panel -->
+        <div id="documentation" class="content-panel">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-list-check"></i> Standard Operating Procedure (SOP)
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <h4>1. Daily Monitoring</h4>
+                        <p>Check the <strong>Service Control</strong> panel at the start of your shift. Ensure all
+                            critical services (Branch, Cashier) are <span class="badge-success">Running</span>.</p>
+
+                        <h4>2. Database Backup</h4>
+                        <p>Perform backups before any major system changes or at the end of the day:</p>
+                        <ol style="padding-left: 20px; line-height: 1.8;">
+                            <li>Navigate to the <strong>Backup</strong> panel.</li>
+                            <li>Select the target databases.</li>
+                            <li>Click <strong>Execute Backup</strong>.</li>
+                            <li>Verify the success message in the <strong>System Log</strong>.</li>
+                        </ol>
+                    </div>
+                    <div class="col">
+                        <h4>3. Database Restore</h4>
+                        <p><span class="badge-danger">CRITICAL ACTION:</span> Only restore when absolutely necessary
+                            (e.g., data corruption).</p>
+                        <ol style="padding-left: 20px; line-height: 1.8;">
+                            <li><strong>Stop Services</strong>: Go to Service Control and stop Branch/Cashier services.
+                            </li>
+                            <li><strong>Select Backup</strong>: Browse for the correct <code>.bak</code> file.</li>
+                            <li><strong>Target</strong>: Ensure the "Client Name" matches the store context.</li>
+                            <li><strong>Confirm</strong>: Click <strong>Restore</strong> and provide the administrative
+                                confirmation.</li>
+                        </ol>
+
+                        <h4>4. Emergency Recovery</h4>
+                        <p>If the system is unresponsive or services are stuck:</p>
+                        <ul style="padding-left: 20px; line-height: 1.8;">
+                            <li>Go to the <strong>Danger Zone</strong>.</li>
+                            <li>Type <code>CONFIRM DANGER ZONE</code> and click <strong>Execute</strong>.</li>
+                            <li>This will force-stop all components and clear temporary blocks.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-book"></i> Documentation & Resources
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <h3 style="margin-bottom: 15px;">DBS | RMS+ POS Admin Tool</h3>
+                        <p style="margin-bottom: 20px;">Production v1.0 | Built for Digital Business Systems (DBS) RMS+
+                            POS Module</p>
+
+                        <h4 style="margin-top: 25px; margin-bottom: 15px;">Key Features</h4>
+                        <ul style="padding-left: 20px; line-height: 1.8; margin-bottom: 25px;">
+                            <li><strong>Service Management</strong>: Real-time monitoring and control of RMS+ services
+                            </li>
+                            <li><strong>Database Backup/Restore</strong>: Automated backup with strict naming
+                                conventions</li>
+                            <li><strong>Safety Validation</strong>: Prevents operations on invalid paths or active
+                                databases</li>
+                            <li><strong>Visual Feedback</strong>: Color-coded status indicators and real-time logging
+                            </li>
+                            <li><strong>Configuration Persistence</strong>: JSON-based settings that persist between
+                                sessions</li>
+                        </ul>
+
+                        <h4 style="margin-top: 25px; margin-bottom: 15px;">System Requirements</h4>
+                        <ul style="padding-left: 20px; line-height: 1.8;">
+                            <li><strong>OS</strong>: Windows 10/11 or Windows Server 2016+</li>
+                            <li><strong>Database</strong>: Microsoft SQL Server 2014+</li>
+                            <li><strong>Privileges</strong>: Administrator elevation required</li>
+                            <li><strong>Python</strong>: 3.10+ (for source execution)</li>
+                            <li><strong>Dependencies</strong>: PySide6, pywin32</li>
+                        </ul>
+                    </div>
+
+                    <div class="col">
+                        <h4 style="margin-bottom: 15px;">Architecture Overview</h4>
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                            <pre style="font-family: 'Consolas', monospace; font-size: 13px;">
+[ UI Layer (View) ] <---> [ MainController ] <---> [ Logic Layer (BatchRunner) ]
+       |                          |                        |
+[ ServiceMonitor ]        [ Config Manager ]       [ System / SQLCMD ]
+       |                                                   |
+[ Windows SCM ]                                     [ SQL Server ]</pre>
+                        </div>
+
+                        <h4 style="margin-top: 25px; margin-bottom: 15px;">Safety Guidelines</h4>
+                        <ul style="padding-left: 20px; line-height: 1.8; margin-bottom: 25px;">
+                            <li><strong>Always Backup</strong> before attempting a Restore operation</li>
+                            <li>Verify SQL permissions (sysadmin or dbcreator roles required)</li>
+                            <li>Do not assume "Success" means data integrity - verify application loads after restore
+                            </li>
+                            <li>Danger Zone operations require explicit confirmation</li>
+                        </ul>
+
+                        <div style="text-align: center; margin-top: 30px;">
+                            <button class="btn btn-primary" style="padding: 12px 25px;">
+                                <i class="fas fa-file-pdf"></i> Download Full Documentation (PDF)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-question-circle"></i> Troubleshooting
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <h4>Common Issues</h4>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                            <tr>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: 600;">Access
+                                    Denied</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">Ensure you are running as
+                                    Administrator</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: 600;">SQL
+                                    Connection Failed</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">Check firewall, TCP/IP
+                                    enablement, and correct Instance Name</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: 600;">Restore
+                                    Failed (In Use)</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">Ensure no other applications
+                                    are connected to the DB</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col">
+                        <h4>Support Information</h4>
+                        <ul style="padding-left: 20px; line-height: 1.8; margin-top: 15px;">
+                            <li><strong>Log Location</strong>: <code>logs/</code> directory (created automatically)</li>
+                            <li><strong>Configuration</strong>: <code>config/settings.json</code></li>
+                            <li><strong>Build Script</strong>: <code>build_exe.bat</code> for creating standalone
+                                executable</li>
+                            <li><strong>Source Entry</strong>: <code>main.py</code></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Panel at Bottom -->
+        <div class="log-panel" style="margin-top: 30px; max-height: 150px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <div style="font-weight: 600;">Real-time System Log</div>
+                <div>
+                    <i class="fas fa-circle" style="color: var(--success); font-size: 10px; margin-right: 5px;"></i>
+                    <span>System Active</span>
+                </div>
+            </div>
+            <div id="realTimeLog">
+                <div class="log-entry">
+                    <span class="log-time">[14:35:10]</span>
+                    <span class="log-info">INFO:</span> POS Admin Tool initialized successfully
+                </div>
+                <div class="log-entry">
+                    <span class="log-time">[14:35:15]</span>
+                    <span class="log-info">INFO:</span> Service monitor thread started
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmationModal">
+        <div class="modal">
+            <div class="modal-title" id="modalTitle">Confirm Action</div>
+            <div class="modal-body" id="modalBody">
+                Are you sure you want to perform this action?
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-warning" id="modalCancel">Cancel</button>
+                <button class="btn btn-danger" id="modalConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function () {
+            // Navigation handling
+            const navItems = document.querySelectorAll('.nav-item');
+            const contentPanels = document.querySelectorAll('.content-panel');
+
+            navItems.forEach(item => {
+                item.addEventListener('click', function () {
+                    const panelId = this.getAttribute('data-panel');
+
+                    // Update active nav item
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Show selected panel
+                    contentPanels.forEach(panel => {
+                        panel.classList.remove('active');
+                        if (panel.id === panelId) {
+                            panel.classList.add('active');
+                        }
+                    });
+                });
+            });
+
+            // Populate service grid
+            const services = [
+                { name: 'RmsBranchSrv', displayName: 'RMS Branch Service', status: 'running', description: 'Core branch operations and data synchronization' },
+                { name: 'RmsCashierSrv', displayName: 'RMS Cashier Service', status: 'running', description: 'POS transaction processing and receipt generation' },
+                { name: 'POSPrintService', displayName: 'POS Print Service', status: 'stopped', description: 'Receipt and report printing management' },
+                { name: 'InventorySync', displayName: 'Inventory Sync Service', status: 'running', description: 'Stock level synchronization across branches' },
+                { name: 'DataExportService', displayName: 'Data Export Service', status: 'running', description: 'Scheduled data exports and reporting' },
+                { name: 'BackupScheduler', displayName: 'Backup Scheduler', status: 'stopped', description: 'Automated database backup scheduling' }
+            ];
+
+            const serviceGrid = document.getElementById('serviceGrid');
+            services.forEach(service => {
+                const serviceCard = document.createElement('div');
+                serviceCard.className = `service-card ${service.status}`;
+                serviceCard.innerHTML = `
+                    <div class="service-header">
+                        <div class="service-name">${service.displayName}</div>
+                        <div class="service-status status-${service.status}">
+                            <span class="status-indicator"></span> ${service.status === 'running' ? 'Running' : 'Stopped'}
+                        </div>
+                    </div>
+                    <div>${service.description}</div>
+                    <div class="service-actions">
+                        <button class="btn btn-${service.status === 'running' ? 'danger' : 'success'} btn-sm service-control" data-service="${service.name}" data-action="${service.status === 'running' ? 'stop' : 'start'}" style="padding: 8px 12px; font-size: 13px;">
+                            <i class="fas fa-${service.status === 'running' ? 'stop' : 'play'}"></i> ${service.status === 'running' ? 'Stop' : 'Start'}
+                        </button>
+                        <button class="btn btn-warning btn-sm service-control" data-service="${service.name}" data-action="restart" style="padding: 8px 12px; font-size: 13px;">
+                            <i class="fas fa-redo"></i> Restart
+                        </button>
+                    </div>
+                `;
+                serviceGrid.appendChild(serviceCard);
+            });
+
+            // Service control buttons
+            document.addEventListener('click', function (e) {
+                if (e.target.closest('.service-control')) {
+                    const button = e.target.closest('.service-control');
+                    const service = button.getAttribute('data-service');
+                    const action = button.getAttribute('data-action');
+
+                    showModal(
+                        'Confirm Service Action',
+                        `Are you sure you want to ${action} the ${service} service?`,
+                        function () {
+                            addLog(`Service control: ${action} ${service}`, 'info');
+                            // In a real application, this would make an API call to control the service
+                            simulateServiceAction(service, action);
+                        }
+                    );
+                }
+
+                // Quick action buttons
+                if (e.target.id === 'quickStartServices') {
+                    showModal('Start All Services', 'Are you sure you want to start all RMS+ services?', function () {
+                        addLog('Starting all services', 'info');
+                    });
+                }
+
+                if (e.target.id === 'quickStopServices') {
+                    showModal('Stop All Services', 'Are you sure you want to stop all RMS+ services?', function () {
+                        addLog('Stopping all services', 'warning');
+                    });
+                }
+
+                if (e.target.id === 'quickBackup') {
+                    showModal('Quick Backup', 'Create a backup of all databases?', function () {
+                        addLog('Starting quick backup of all databases', 'info');
+                    });
+                }
+
+                if (e.target.id === 'quickTestConnection') {
+                    addLog('Testing SQL connection...', 'info');
+                    setTimeout(() => {
+                        addLog('SQL connection test successful', 'info');
+                    }, 1000);
+                }
+
+                // Configuration panel buttons
+                if (e.target.id === 'testConnection') {
+                    addLog('Testing SQL Server connection...', 'info');
+                    setTimeout(() => {
+                        addLog('Connection to SQL Server established successfully', 'info');
+                    }, 1500);
+                }
+
+                if (e.target.id === 'discoverSql') {
+                    addLog('Discovering SQL instances on network...', 'info');
+                    setTimeout(() => {
+                        addLog('Found 3 SQL instances: .\\MSSQLSERVER, DBS-SQL01, DBS-SQL02', 'info');
+                    }, 2000);
+                }
+
+                if (e.target.id === 'saveConfig') {
+                    addLog('Configuration saved to config/settings.json', 'info');
+                }
+
+                // Backup panel buttons
+                if (e.target.id === 'validateBackup') {
+                    addLog('Validating backup settings...', 'info');
+                    setTimeout(() => {
+                        addLog('Backup settings validation successful', 'info');
+                    }, 1000);
+                }
+
+                if (e.target.id === 'executeBackup') {
+                    showModal('Execute Backup', 'Start the backup operation? This may take several minutes.', function () {
+                        addLog('Starting backup operation...', 'info');
+                        simulateBackupProgress();
+                    });
+                }
+
+                // Restore panel buttons
+                if (e.target.id === 'executeRestore') {
+                    showModal('Execute Restore', 'WARNING: This will overwrite the target database. Are you sure?', function () {
+                        addLog('Starting database restore operation...', 'warning');
+                    });
+                }
+
+                // Danger zone confirmation
+                const dangerConfirm = document.getElementById('dangerConfirmation');
+                const executeDanger = document.getElementById('executeDanger');
+
+                dangerConfirm.addEventListener('input', function () {
+                    executeDanger.disabled = this.value !== 'CONFIRM DANGER ZONE';
+                });
+
+                if (e.target.id === 'executeDanger') {
+                    showModal('DANGER ZONE OPERATIONS', 'You are about to execute destructive operations. This cannot be undone. Proceed?', function () {
+                        addLog('Executing danger zone operations...', 'error');
+                        addLog('All services stopped', 'warning');
+                        addLog('Temporary files cleared', 'info');
+                        addLog('File locks released', 'info');
+
+                        // Reset confirmation field
+                        dangerConfirm.value = '';
+                        executeDanger.disabled = true;
+                    });
+                }
+
+                // Logs panel buttons
+                if (e.target.id === 'refreshLogs') {
+                    addLog('Refreshing log view...', 'info');
+                }
+
+                if (e.target.id === 'clearLogs') {
+                    showModal('Clear Logs', 'Clear all log entries from the display?', function () {
+                        document.getElementById('systemLogs').innerHTML = '';
+                        addLog('Log display cleared', 'info');
+                    });
+                }
+            });
+
+            // Modal handling
+            const modal = document.getElementById('confirmationModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            const modalCancel = document.getElementById('modalCancel');
+            const modalConfirm = document.getElementById('modalConfirm');
+
+            let confirmCallback = null;
+
+            function showModal(title, body, callback) {
+                modalTitle.textContent = title;
+                modalBody.textContent = body;
+                confirmCallback = callback;
+                modal.style.display = 'flex';
+            }
+
+            modalCancel.addEventListener('click', function () {
+                modal.style.display = 'none';
+            });
+
+            modalConfirm.addEventListener('click', function () {
+                if (confirmCallback) confirmCallback();
+                modal.style.display = 'none';
+            });
+
+            // Close modal when clicking outside
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+
+            // Add sample logs
+            function addLog(message, type = 'info') {
+                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+
+                let typeClass = 'log-info';
+                if (type === 'warning') typeClass = 'log-warning';
+                if (type === 'error') typeClass = 'log-error';
+
+                logEntry.innerHTML = `
+                    <span class="log-time">[${time}]</span> 
+                    <span class="${typeClass}">${type.toUpperCase()}:</span> ${message}
+                `;
+
+                // Add to system logs if logs panel is active
+                const systemLogs = document.getElementById('systemLogs');
+                if (systemLogs) {
+                    systemLogs.appendChild(logEntry);
+                    systemLogs.scrollTop = systemLogs.scrollHeight;
+                }
+
+                // Also add to real-time log at bottom
+                const realTimeLog = document.getElementById('realTimeLog');
+                if (realTimeLog) {
+                    realTimeLog.appendChild(logEntry.cloneNode(true));
+                    realTimeLog.scrollTop = realTimeLog.scrollHeight;
+                }
+
+                // Keep only last 10 entries in real-time log
+                const realTimeEntries = realTimeLog.querySelectorAll('.log-entry');
+                if (realTimeEntries.length > 10) {
+                    realTimeEntries[0].remove();
+                }
+            }
+
+            // Simulate service status changes
+            function simulateServiceAction(service, action) {
+                const serviceCards = document.querySelectorAll('.service-card');
+                serviceCards.forEach(card => {
+                    const serviceName = card.querySelector('.service-name').textContent;
+                    if (serviceName.includes(service) || serviceName.replace('Service', '').includes(service)) {
+                        const statusElement = card.querySelector('.service-status');
+                        const button = card.querySelector('.service-control[data-action="stop"], .service-control[data-action="start"]');
+
+                        if (action === 'stop' || action === 'restart') {
+                            card.classList.remove('running');
+                            card.classList.add('stopped');
+                            statusElement.className = 'service-status status-stopped';
+                            statusElement.innerHTML = '<span class="status-indicator"></span> Stopped';
+
+                            if (button) {
+                                button.className = 'btn btn-success btn-sm service-control';
+                                button.innerHTML = '<i class="fas fa-play"></i> Start';
+                                button.setAttribute('data-action', 'start');
+                            }
+
+                            if (action === 'restart') {
+                                setTimeout(() => {
+                                    card.classList.remove('stopped');
+                                    card.classList.add('running');
+                                    statusElement.className = 'service-status status-running';
+                                    statusElement.innerHTML = '<span class="status-indicator"></span> Running';
+
+                                    if (button) {
+                                        button.className = 'btn btn-danger btn-sm service-control';
+                                        button.innerHTML = '<i class="fas fa-stop"></i> Stop';
+                                        button.setAttribute('data-action', 'stop');
+                                    }
+
+                                    addLog(`Service ${service} restarted successfully`, 'info');
+                                }, 2000);
+                            }
+                        } else if (action === 'start') {
+                            card.classList.remove('stopped');
+                            card.classList.add('running');
+                            statusElement.className = 'service-status status-running';
+                            statusElement.innerHTML = '<span class="status-indicator"></span> Running';
+
+                            if (button) {
+                                button.className = 'btn btn-danger btn-sm service-control';
+                                button.innerHTML = '<i class="fas fa-stop"></i> Stop';
+                                button.setAttribute('data-action', 'stop');
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Simulate backup progress
+            function simulateBackupProgress() {
+                addLog('Backup initialized', 'info');
+
+                setTimeout(() => addLog('Stopping services for consistent backup...', 'info'), 1000);
+                setTimeout(() => addLog('Backing up RMS_BranchDB...', 'info'), 3000);
+                setTimeout(() => addLog('RMS_BranchDB backup completed (1.2 GB)', 'info'), 6000);
+                setTimeout(() => addLog('Backing up RMS_CashierDB...', 'info'), 7000);
+                setTimeout(() => addLog('RMS_CashierDB backup completed (850 MB)', 'info'), 9000);
+                setTimeout(() => addLog('Starting services...', 'info'), 10000);
+                setTimeout(() => addLog('Backup completed successfully: DBS_MAIN_Full_20231115_143245.bak', 'info'), 12000);
+            }
+
+            // Add initial logs
+            setTimeout(() => {
+                addLog('Service monitor: All services checked', 'info');
+                addLog('Configuration auto-saved', 'info');
+            }, 2000);
+
+            // Simulate periodic service status updates
+            setInterval(() => {
+                // Randomly change a service status for demo purposes
+                if (Math.random() > 0.8) {
+                    const randomService = services[Math.floor(Math.random() * services.length)];
+                    const currentStatus = randomService.status;
+                    const newStatus = currentStatus === 'running' ? 'stopped' : 'running';
+
+                    randomService.status = newStatus;
+
+                    // Update UI
+                    const serviceCards = document.querySelectorAll('.service-card');
+                    serviceCards.forEach(card => {
+                        const serviceName = card.querySelector('.service-name').textContent;
+                        if (serviceName.includes(randomService.displayName)) {
+                            if (newStatus === 'stopped') {
+                                card.classList.remove('running');
+                                card.classList.add('stopped');
+                                const statusElement = card.querySelector('.service-status');
+                                statusElement.className = 'service-status status-stopped';
+                                statusElement.innerHTML = '<span class="status-indicator"></span> Stopped';
+
+                                const button = card.querySelector('.service-control[data-action="stop"], .service-control[data-action="start"]');
+                                if (button) {
+                                    button.className = 'btn btn-success btn-sm service-control';
+                                    button.innerHTML = '<i class="fas fa-play"></i> Start';
+                                    button.setAttribute('data-action', 'start');
+                                }
+
+                                addLog(`Service ${randomService.name} stopped unexpectedly`, 'warning');
+                            }
+                        }
+                    });
+                }
+            }, 15000);
+        });
+    </script>
+</body>
+
+</html>

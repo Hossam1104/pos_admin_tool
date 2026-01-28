@@ -8,13 +8,14 @@ import PyInstaller.__main__
 
 def build_exe():
     """Build the executable using PyInstaller"""
-    app_name = "POSAdminTool"
+    app_name = "RMSPlus_POSAdmin_v1.0"
 
     # Get the main script path
     main_script = Path(__file__).parent / "app" / "main.py"
 
     # Additional data files
     assets_dir = Path(__file__).parent / "assets"
+    icon_path = assets_dir / "icons" / "app_icon.ico"
     config_dir = Path(__file__).parent / "config"
 
     # PyInstaller arguments
@@ -23,17 +24,20 @@ def build_exe():
         f"--name={app_name}",
         "--onefile",
         "--windowed",  # Hide console window
-        "--clean",
+        "--windowed",  # Hide console window
         "--noconfirm",
-        f"--add-data={assets_dir};assets",
-        f"--add-data={config_dir};config",
-        "--icon=assets/icons/app_icon.ico",
+        f"--icon={icon_path}",
         "--hidden-import=PySide6",
         "--hidden-import=PySide6.QtCore",
         "--hidden-import=PySide6.QtGui",
         "--hidden-import=PySide6.QtWidgets",
         "--hidden-import=win32crypt",
         "--hidden-import=win32cryptcon",
+        "--hidden-import=win32timezone",
+        "--hidden-import=win32api",
+        "--hidden-import=win32service",
+        "--hidden-import=win32serviceutil",
+        "--hidden-import=win32event",
         "--hidden-import=zipfile",
         "--hidden-import=shutil",
         "--hidden-import=json",
@@ -51,6 +55,12 @@ def build_exe():
         "--hidden-import=typing",
         "--hidden-import=enum",
     ]
+
+    if assets_dir.exists():
+        args.append(f"--add-data={assets_dir};assets")
+
+    if config_dir.exists():
+        args.append(f"--add-data={config_dir};config")
 
     # Run PyInstaller
     PyInstaller.__main__.run(args)

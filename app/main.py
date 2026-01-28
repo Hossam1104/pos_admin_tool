@@ -2,17 +2,29 @@
 """
 POS Admin Tool - Main Application Entry Point
 """
+
 import sys
 from pathlib import Path
 
 # Add the app directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import os
+
+# Disable Qt translations to prevent PyInstaller extraction errors
+os.environ["QT_TRANSLATIONS_PATH"] = ""
+
+# Set AppUserModelID for Windows Taskbar icon consistency
+if os.name == "nt":
+    import ctypes
+
+    myappid = "dbs.rmsplus.pos_admin.v1.0"  # arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QTimer
-from app.logic.admin import AdminManager
-from app.ui.main_window import MainWindow
-from app.utils.logger import setup_logger
+from app.admin import AdminManager
+from app.ui import MainWindow
+from app.logger import setup_logger
 
 
 def main():
@@ -37,6 +49,12 @@ def main():
     app.setApplicationName("POS Admin Tool")
     app.setOrganizationName("RMS")
 
+    from PySide6.QtGui import QIcon
+
+    icon_path = Path(__file__).parent.parent / "assets" / "icons" / "app_icon.ico"
+    if icon_path.exists():
+        app.setWindowIcon(QIcon(str(icon_path)))
+
     # Load stylesheet
     style_path = Path(__file__).parent.parent / "assets" / "styles" / "theme.qss"
     if style_path.exists():
@@ -46,9 +64,6 @@ def main():
     # Create and show main window
     window = MainWindow()
     window.show()
-
-    # Start service monitoring
-    QTimer.singleShot(1000, window.start_service_monitoring)
 
     # Run application
     return_code = app.exec()
@@ -67,7 +82,7 @@ if __name__ == "__main__":
 
         # Try to log to file
         try:
-            from app.utils.logger import setup_logger
+            from app.logger import setup_logger
             import traceback
 
             logger = setup_logger()

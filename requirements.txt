@@ -2,3 +2,4 @@
 PySide6==6.10.1
 pyinstaller==6.2.0
 pywin32==306  # For Windows DPAPI encryption
+requests==2.31.0

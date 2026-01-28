@@ -31,6 +31,14 @@ class AppSettings:
         ]
     )
 
+    known_services: List[str] = field(
+        default_factory=lambda: [
+            "RMS.CashierService",
+            "RMS.BranchService",
+            "RMSServiceManager",
+        ]
+    )
+
     # Folders to delete
     folders_to_delete: List[str] = field(
         default_factory=lambda: [
@@ -52,7 +60,7 @@ class AppSettings:
     )
 
     # Backup configuration
-    backup_folder: str = str(Path(os.environ.get("SystemDrive", "C:")) / "DB Backups")
+    backup_folder: str = r"D:\DB Backups"
 
     # AppSettings files
     appsettings_files: List[Dict[str, str]] = field(
@@ -73,7 +81,18 @@ class AppSettings:
     )
 
     # Client name (for restore)
-    client_name: str = ""
+    client_name: str = "UPC"
 
     # Last used backup directory
     last_backup_dir: str = ""
+
+    # Restore Preferences (Persisted)
+    mdf_path: Optional[str] = None
+    ldf_path: Optional[str] = None
+
+    # New Configuration Fields
+    branch_code: str = ""
+    pos_number: str = ""
+    # Path Configuration (Standardized)
+    release_path: str = r"C:\ProgramData\RMS_Plus\ReleaseNumber.txt"
+    env_config_path: str = r"C:\Workspaces\DBS\RMS\RMS.CashierServer\appsettings.json"
