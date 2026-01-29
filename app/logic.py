@@ -10,6 +10,7 @@ import requests
 from pathlib import Path
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime
+from PySide6.QtCore import QObject, Signal
 
 from app.logger import get_logger
 from app.models import OperationResult, Resource, ResourceType, OperationStatus
@@ -17,8 +18,11 @@ from app.models import OperationResult, Resource, ResourceType, OperationStatus
 logger = get_logger()
 
 
-class BatchRunner:
+class BatchRunner(QObject):
     """Executes commands equivalent to the original batch files"""
+
+    # Signals
+    log_message = Signal(str, bool)  # message, is_error
 
     # Timeout constants (seconds)
     COMMAND_TIMEOUT = 300  # 5 minutes for long-running commands
@@ -26,22 +30,16 @@ class BatchRunner:
     SQL_TIMEOUT = 600  # 10 minutes for database operations
 
     def __init__(self, config_manager):
+        super().__init__()
         self.config = config_manager
-        self.output_callback = None
 
-    def set_output_callback(self, callback):
-        """Set callback for real-time output"""
-        self.output_callback = callback
-
+    # Log output and send to signal
     def _log_output(self, message: str, is_error: bool = False):
-        """Log output and send to callback"""
+        self.log_message.emit(message, is_error)
         if is_error:
             logger.error(message)
         else:
             logger.info(message)
-
-        if self.output_callback:
-            self.output_callback(message, is_error)
 
     def run_command(
         self,
@@ -396,7 +394,10 @@ class BatchRunner:
         self._log_output(f"[*] Verifying Branch: {full_url}")
 
         try:
-            response = requests.get(full_url, timeout=15)
+            # Enforce detailed error capability
+            response = requests.get(
+                full_url, timeout=15, verify=False
+            )  # SSL Verify False to avoid cert issues in custom environments
             self._log_output(f"    Status: {response.status_code}")
 
             if response.status_code == 200:
@@ -405,7 +406,9 @@ class BatchRunner:
                     # Expecting a list of dicts
                     if isinstance(branches, list):
                         for b in branches:
-                            if b.get("BranchCode") == branch_code:
+                            if str(b.get("BranchCode")) == str(
+                                branch_code
+                            ):  # String comparison safety
                                 return (
                                     True,
                                     f"Branch {branch_code} is Installed (ID: {b.get('Id')})",
@@ -421,6 +424,13 @@ class BatchRunner:
             else:
                 return False, f"API Failed: {response.status_code}"
 
+        except requests.exceptions.RequestException:
+            # User Friendly Message
+            err_msg = (
+                "Connection to the server is lost. Please check your VPN connection."
+            )
+            self._log_output(err_msg, is_error=True)
+            return False, err_msg
         except Exception as e:
             self._log_output(f"API Error: {e}", is_error=True)
             return False, f"Connection Error: {e}"
@@ -924,7 +934,8 @@ class BatchRunner:
                 result.add_warning(f"    - Shrink failed: {db}")
 
             # B. Backup (Critical)
-            backup_path = temp_dir / f"{db}_{timestamp}.bak"
+            # User Request: inner .bak file should have the same name as the DB
+            backup_path = temp_dir / f"{db}.bak"
             self._log_output(f"    - Backing up to: {backup_path.name}")
             backup_success = self.backup_database(db, str(backup_path))
 
@@ -1010,7 +1021,9 @@ class BatchRunner:
 
         new_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-        zip_name = f"{client_name}_{branch_code}_POS_{pos_number}_RmsBranchSrv_DB_Backup_{new_timestamp}.zip"
+        # New Format: <clientName>_<BranchCode>_POS_<MachineNumer>_DB_Backup_<date and time Stamp>.zip
+        # Example: UPC_P001_POS_1_DB_Backup_2026-01-29_02-18-52.zip
+        zip_name = f"{client_name}_{branch_code}_POS_{pos_number}_DB_Backup_{new_timestamp}.zip"
         zip_file = Path(backup_folder) / zip_name
 
         # Check if we have anything to zip

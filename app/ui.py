@@ -3,6 +3,7 @@ Unified UI module - Modern Windows-Native Design (Refactored)
 """
 
 import os
+import sys
 import time
 from typing import List
 
@@ -208,9 +209,6 @@ class WorkerThread(QThread):
         self.runner = runner
         self.generic_func = generic_func
         self.kwargs = kwargs
-
-        if self.runner:
-            self.runner.set_output_callback(self.emit_output)
         self._is_cancelled = False
 
     def emit_output(self, message: str, is_error: bool = False):
@@ -284,6 +282,9 @@ class MainController(QObject):
         self.config_manager = ConfigManager()
         self.settings = self.config_manager.load()
         self.batch_runner = BatchRunner(self.config_manager)
+        # Connect Logic Signals to Controller Signals
+        self.batch_runner.log_message.connect(self.log_msg.emit)
+
         self.service_monitor = ServiceMonitor(self.settings.services)
         self.worker = None
 
@@ -346,6 +347,12 @@ class MainController(QObject):
             success = self.batch_runner.test_sql_connection(instance, user, password)
             if success:
                 self.log_msg.emit("SQL Connection Successful!", False)
+                # Success Alert for DB Connection (triggers on_op_finished)
+                from app.models import OperationStatus
+
+                test_result = OperationResult.create("test_connection")
+                test_result.finalize(OperationStatus.SUCCESS)
+                self.op_finished.emit(test_result)
 
                 try:
                     dbs = self.batch_runner.fetch_databases(instance, user, password)
@@ -355,8 +362,19 @@ class MainController(QObject):
                         )
                         # Update settings with new DBs and refresh UI
                         # Use discovered DBs as the source of truth for the NEW instance
+                        # Update settings with new DBs
                         self.settings.databases = dbs
-                        self.config_loaded.emit(self.settings)
+                        self.config_manager.save()
+
+                        # Selectively update Ops Panel without resetting Service Panel
+                        from PySide6.QtWidgets import QMainWindow
+
+                        for widget in QApplication.topLevelWidgets():
+                            if isinstance(widget, QMainWindow) and hasattr(
+                                widget, "ops_panel"
+                            ):
+                                widget.ops_panel.load_state(self.settings)
+                                break
                 except Exception as e:
                     self.log_msg.emit(f"DB Discovery failed: {e}", True)
             else:
@@ -564,7 +582,7 @@ class ConfigurationPanel(QGroupBox):
         layout.addWidget(self.lbl_server_status, 5, 3)
 
         # Row 6: Actions
-        btn_test = QPushButton("Test Connection")
+        btn_test = QPushButton("Test DB Connection")
         btn_test.setMinimumHeight(40)
         btn_test.clicked.connect(self.test_conn)
 
@@ -688,8 +706,11 @@ class ConfigurationPanel(QGroupBox):
         self.controller.log_msg.emit("Verifying Branch Install Status...", False)
 
         def run_verify():
-            found, msg = self.controller.batch_runner.verify_branch_install_status()
-            return found, msg
+            try:
+                found, msg = self.controller.batch_runner.verify_branch_install_status()
+                return found, msg
+            except Exception as e:
+                return False, f"Crash prevented: {e}"
 
         worker = WorkerThread(operation_type="generic", generic_func=run_verify)
         worker.generic_result.connect(self.on_verify_complete)
@@ -745,17 +766,23 @@ class ServiceControlPanel(QGroupBox):
         super().__init__("Service Status")
         self.controller = controller
         self.cards = {}
+        self.last_statuses = {}  # Cache to prevent flickering
         self.layout = QGridLayout(self)
         self.layout.setSpacing(15)
         self.layout.setContentsMargins(15, 20, 15, 15)
 
     def refresh_layout(self, services: List[str]):
+        # Guard: Check if list actually changed to prevent resetting to "Checking..."
+        if set(services) == set(self.cards.keys()) and self.cards:
+            return
+
         # Clear existing
         while self.layout.count():
             child = self.layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
         self.cards = {}
+        self.last_statuses = {}  # Clear cache to prevent "stuck" labels after refresh
 
         cols = 4
         for i, svc in enumerate(services):
@@ -824,6 +851,11 @@ class ServiceControlPanel(QGroupBox):
             if name not in self.cards:
                 continue
 
+            # Check if status actually changed to prevent flickering
+            if self.last_statuses.get(name) == status_enum:
+                continue
+
+            self.last_statuses[name] = status_enum
             w = self.cards[name]
             lbl = w["status_lbl"]
             btns = w["btns"]
@@ -836,9 +868,9 @@ class ServiceControlPanel(QGroupBox):
                 btn = btns[btn_name]
                 btn.setEnabled(is_enabled)
                 if is_enabled:
-                    # Apply background color and black text for visibility
+                    # Apply background color and white text for better visibility on bold colors
                     btn.setStyleSheet(
-                        f"background-color: {active_color}; color: black; border-radius: 6px; font-weight: bold;"
+                        f"background-color: {active_color}; color: white; border-radius: 6px; font-weight: bold;"
                     )
                 else:
                     # Muted background for disabled state
@@ -1211,7 +1243,9 @@ class MainWindow(QMainWindow):
         self.showMaximized()
 
         # Set Window Icon for Taskbar Consistency
-        icon_path = os.path.abspath(os.path.join("assets", "icons", "app_icon.ico"))
+        from app.utils import resource_path
+
+        icon_path = resource_path(os.path.join("assets", "icons", "app_icon.ico"))
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
@@ -1351,6 +1385,16 @@ class MainWindow(QMainWindow):
 
         title_layout.addWidget(meta_row)
 
+        # POS Prerequisites Button
+        btn_prereqs = QPushButton("POS Prerequisites")
+        btn_prereqs.setCursor(Qt.PointingHandCursor)
+        btn_prereqs.setStyleSheet(
+            f"QPushButton {{ background-color: {COLORS['INFO']}; color: white; padding: 10px 20px; border-radius: 25px; font-weight: 900; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}"
+            f"QPushButton:hover {{ background-color: #0369A1; margin-top: -2px; }}"
+            f"QPushButton:pressed {{ background-color: #075985; margin-top: 0px; }}"
+        )
+        btn_prereqs.clicked.connect(self.open_prereqs)
+
         # Docs Button
         btn_docs = QPushButton("Open Documentation")
         btn_docs.setCursor(Qt.PointingHandCursor)
@@ -1364,6 +1408,8 @@ class MainWindow(QMainWindow):
 
         header_layout.addWidget(title_widget)
         header_layout.addStretch()
+        header_layout.addWidget(btn_prereqs)
+        header_layout.addSpacing(10)
         header_layout.addWidget(btn_docs)
 
         main_layout.addWidget(header_widget)
@@ -1422,6 +1468,10 @@ class MainWindow(QMainWindow):
         event.accept()
 
     def on_config_loaded(self, settings: AppSettings):
+        # Update Connectivity Monitor Target
+        if settings.api_base_url:
+            self.conn_monitor.set_target_from_url(settings.api_base_url)
+
         # Pass services to service panel to rebuild grid
         self.service_panel.refresh_layout(settings.services)
         self.ops_panel.load_state(settings)
@@ -1454,12 +1504,26 @@ class MainWindow(QMainWindow):
                 self, "Success", "Operation completed successfully."
             )
 
+    def open_prereqs(self):
+        try:
+            url = "https://drive.google.com/drive/folders/11RAkduhKXDrX8R2Tq2TRGbRdbd9-q9-z"
+            QDesktopServices.openUrl(QUrl(url))
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Could not open link:\\n{str(e)}")
+
     def open_docs(self):
         try:
-            # Assume documentations.html is in the project root (parent of app/ or same as main.py context)
-            # We are in app/ui.py. Project root is likely two levels up if viewing from here,
-            # but main.py runs from root. Let's rely on CWD being project root.
-            docs_path = os.path.abspath("documentations.html")
+            # Determine path whether running from source or frozen EXE
+            if getattr(sys, "frozen", False):
+                # If the application is run as a bundle, the PyInstaller bootloader
+                # extends the sys module by a flag frozen=True and sets the app
+                # path into variable _MEIPASS.
+                base_path = sys._MEIPASS
+            else:
+                base_path = os.path.abspath(".")
+
+            docs_path = os.path.join(base_path, "README.txt")
+
             if os.path.exists(docs_path):
                 QDesktopServices.openUrl(QUrl.fromLocalFile(docs_path))
             else:

@@ -2,7 +2,6 @@
 
 **Version:** 1.0 (Production)  
 **Provider:** Digital Business Systems (DBS)  
-**Client:** AlDawaa Medical Service Company
 
 ---
 
@@ -68,8 +67,8 @@ If a POS terminal is offline or not syncing:
 Use this section only if the system is completely stuck or needs to be uninstalled.
 - **Cleanup System**: Force-stops services and deletes temporary files.
 - **Uninstall Options**:
-  - **Uninstall Branch**: Deregisters the branch from the server.
-  - **Uninstall POS**: Deregisters the specific POS machine.
+  - **Uninstall Branch**: Mark the branch as Uninstalled on the server.
+  - **Uninstall POS**: Mark the POS as Uninstalled on the server.
   - *Note: These require you to check "I understand the risks" and confirm multiple prompts.*
 
 ---
@@ -88,4 +87,4 @@ Use this section only if the system is completely stuck or needs to be uninstall
 ## 📞 Support
 For critical issues, please contact **DBS Support**.
 
-*© 2026 Digital Business Systems*
+*© Digital Business Systems*

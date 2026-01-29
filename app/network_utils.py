@@ -1,12 +1,8 @@
-import sys
-import os
 import json
 import time
-import subprocess
-import platform
 import logging
 from pathlib import Path
-from PySide6.QtCore import QThread, Signal, QObject
+from PySide6.QtCore import QThread, Signal
 
 # Configure logging if not already configured
 logger = logging.getLogger(__name__)
@@ -23,12 +19,38 @@ class ConnectivityMonitor(QThread):
     def __init__(self, target_ip="10.10.10.181", interval=5):
         super().__init__()
         self.target_ip = target_ip
+        self.target_port = 80
         self.interval = interval
         self._is_running = True
 
+    def set_target_from_url(self, url: str):
+        """Extract IP or Hostname and Port from URL and update target"""
+        if not url:
+            return
+
+        try:
+            from urllib.parse import urlparse
+
+            parsed = urlparse(url)
+            hostname = parsed.hostname
+            port = parsed.port
+
+            if hostname:
+                if hostname != self.target_ip:
+                    logger.info(f"ConnectivityMonitor: Updating target to {hostname}")
+                    self.target_ip = hostname
+
+                # Update port (default to 80 if common, or 8080 if detected)
+                new_port = port if port else (8080 if ":8080" in url else 80)
+                if new_port != self.target_port:
+                    logger.info(f"ConnectivityMonitor: Updating port to {new_port}")
+                    self.target_port = new_port
+        except Exception as e:
+            logger.error(f"Failed to extract hostname from URL {url}: {e}")
+
     def run(self):
         while self._is_running:
-            is_connected = self.ping_server()
+            is_connected = self.check_connection()
             status_text = "Connected" if is_connected else "Not Reachable"
             self.status_changed.emit(is_connected, status_text)
 
@@ -42,39 +64,23 @@ class ConnectivityMonitor(QThread):
         self._is_running = False
         self.wait()
 
-    def ping_server(self) -> bool:
+    def check_connection(self) -> bool:
         """
-        Executes a single ping to the target IP.
-        Returns True if successful (0% packet loss), False otherwise.
+        Tests connectivity using a TCP socket connection.
+        This is more reliable than Ping if ICMP is blocked.
         """
+        import socket
+
         try:
-            # Platform specific ping parameters
-            param = "-n" if platform.system().lower() == "windows" else "-c"
-
-            # Timeout param (Windows: -w in ms, Linux: -W in s)
-            # We want a relatively quick check so UI doesn't lag if logic was blocking (it's threaded though)
-            timeout_param = "-w" if platform.system().lower() == "windows" else "-W"
-            timeout_val = "1000" if platform.system().lower() == "windows" else "1"
-
-            command = ["ping", param, "1", timeout_param, timeout_val, self.target_ip]
-
-            # Check for Windows specifically to avoid console popping up
-            if platform.system().lower() == "windows":
-                creationflags = subprocess.CREATE_NO_WINDOW
-                result = subprocess.run(
-                    command,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    creationflags=creationflags,
-                )
-            else:
-                result = subprocess.run(
-                    command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-                )
-
-            return result.returncode == 0
+            # Create a socket and try to connect
+            with socket.create_connection(
+                (self.target_ip, self.target_port), timeout=2
+            ):
+                return True
+        except (socket.timeout, ConnectionRefusedError, OSError):
+            return False
         except Exception as e:
-            logger.error(f"Ping failed: {e}")
+            logger.error(f"Socket connection check failed: {e}")
             return False
 
 

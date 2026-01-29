@@ -50,14 +50,15 @@ def main():
     app.setOrganizationName("RMS")
 
     from PySide6.QtGui import QIcon
+    from app.utils import resource_path
 
-    icon_path = Path(__file__).parent.parent / "assets" / "icons" / "app_icon.ico"
-    if icon_path.exists():
-        app.setWindowIcon(QIcon(str(icon_path)))
+    icon_path = resource_path(os.path.join("assets", "icons", "app_icon.ico"))
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
 
     # Load stylesheet
-    style_path = Path(__file__).parent.parent / "assets" / "styles" / "theme.qss"
-    if style_path.exists():
+    style_path = resource_path(os.path.join("assets", "styles", "theme.qss"))
+    if os.path.exists(style_path):
         with open(style_path, "r") as f:
             app.setStyleSheet(f.read())
 
