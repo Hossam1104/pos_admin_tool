@@ -292,10 +292,22 @@ class MainController(QObject):
 
     def start_app(self):
         """Initial startup sequence"""
+        self.auto_import_rms_settings()
         self.config_loaded.emit(self.settings)
         # Delay service start slightly to allow UI to show
         QTimer.singleShot(1000, self.service_monitor.start_monitoring)
         self.log_msg.emit("Application started. Monitor active.", False)
+
+    def auto_import_rms_settings(self):
+        """Silently import settings from RMS+ on startup"""
+        success, result = self.batch_runner.import_rms_settings()
+        if success and isinstance(result, dict):
+            for k, v in result.items():
+                if hasattr(self.settings, k):
+                    setattr(self.settings, k, v)
+            # Save the auto-imported settings
+            self.config_manager.save()
+            self.log_msg.emit("Settings auto-loaded from RMS+.", False)
 
     def shutdown(self):
         self.service_monitor.stop_monitoring()
@@ -916,6 +928,7 @@ class OperationsPanel(QGroupBox):
         l_restore.addWidget(QLabel("Target DB:"), 1, 0)
         self.res_target = QLineEdit()
         self.res_target.setPlaceholderText("Target Database Name")
+        self.res_target.setToolTip("Editable: Use [ClientName]_[DBName] format")
         l_restore.addWidget(self.res_target, 1, 1)
 
         l_restore.addWidget(QLabel("Backup File:"), 2, 0)
@@ -932,27 +945,16 @@ class OperationsPanel(QGroupBox):
         hb_file.addWidget(btn_res_browse)
         l_restore.addLayout(hb_file, 2, 1)
 
-        l_restore.addWidget(QLabel("MDF Folder:"), 3, 0)
-        self.mdf_path = QLineEdit()
-        btn_mdf = QPushButton("...")
-        btn_mdf.setFixedSize(40, 30)
-        btn_mdf.setStyleSheet(f"background-color: {COLORS['DISABLED']}; color: black;")
-        btn_mdf.clicked.connect(lambda: self.browse_folder(self.mdf_path))
-        hb_mdf = QHBoxLayout()
-        hb_mdf.addWidget(self.mdf_path)
-        hb_mdf.addWidget(btn_mdf)
-        l_restore.addLayout(hb_mdf, 3, 1)
-
-        l_restore.addWidget(QLabel("LDF Folder:"), 4, 0)
-        self.ldf_path = QLineEdit()
-        btn_ldf = QPushButton("...")
-        btn_ldf.setFixedSize(40, 30)
-        btn_ldf.setStyleSheet(f"background-color: {COLORS['DISABLED']}; color: black;")
-        btn_ldf.clicked.connect(lambda: self.browse_folder(self.ldf_path))
-        hb_ldf = QHBoxLayout()
-        hb_ldf.addWidget(self.ldf_path)
-        hb_ldf.addWidget(btn_ldf)
-        l_restore.addLayout(hb_ldf, 4, 1)
+        l_restore.addWidget(QLabel("DB Files Path:"), 3, 0)
+        self.db_path = QLineEdit()
+        btn_db = QPushButton("...")
+        btn_db.setFixedSize(40, 30)
+        btn_db.setStyleSheet(f"background-color: {COLORS['DISABLED']}; color: black;")
+        btn_db.clicked.connect(lambda: self.browse_folder(self.db_path))
+        hb_db = QHBoxLayout()
+        hb_db.addWidget(self.db_path)
+        hb_db.addWidget(btn_db)
+        l_restore.addLayout(hb_db, 3, 1, 1, 1)
 
         btn_restore = QPushButton("RESTORE DATABASE")
         btn_restore.setMinimumHeight(45)
@@ -1003,20 +1005,17 @@ class OperationsPanel(QGroupBox):
                 self.config_layout.addWidget(chk)
 
         if settings.mdf_path:
-            self.mdf_path.setText(settings.mdf_path)
+            self.db_path.setText(settings.mdf_path)
         else:
-            self.mdf_path.setText(r"D:\DB Backups")
-
-        if settings.ldf_path:
-            self.ldf_path.setText(settings.ldf_path)
-        else:
-            self.ldf_path.setText(r"D:\DB Backups")
+            self.db_path.setText(r"D:\DB Backups")
 
     def update_target_preview(self):
+        # Update client name from config panel if available
+        prefix = self.controller.settings.client_name or "UPC"
         t = self.res_type.currentText()
         suffix = "RmsBranchSrv" if "Branch" in t else "RmsCashierSrv"
-        self.res_target.setText(f"{self.client_name}_{suffix}")
-        self.res_target.setReadOnly(True)  # Enforce deterministic mapping
+        self.res_target.setText(f"{prefix}_{suffix}")
+        self.res_target.setReadOnly(False)  # Allow manual editing
 
     def browse_bak(self):
         f, _ = QFileDialog.getOpenFileName(
@@ -1047,11 +1046,12 @@ class OperationsPanel(QGroupBox):
         )
 
     def run_restore(self):
+        path = self.db_path.text()
         data = {
             "target_db": self.res_target.text(),
             "backup_path": self.res_file.text(),
-            "mdf_path": self.mdf_path.text(),
-            "ldf_path": self.ldf_path.text(),
+            "mdf_path": path,
+            "ldf_path": path,
         }
         if not data["backup_path"]:
             QMessageBox.warning(self, "Input", "Please select a backup file.")
@@ -1060,9 +1060,7 @@ class OperationsPanel(QGroupBox):
         self.controller.execute_operation("restore", **data)
 
         # Persist paths
-        self.controller.save_config(
-            {"mdf_path": data["mdf_path"], "ldf_path": data["ldf_path"]}
-        )
+        self.controller.save_config({"mdf_path": path, "ldf_path": path})
 
 
 class CleanupPanel(QGroupBox):

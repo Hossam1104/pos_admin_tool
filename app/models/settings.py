@@ -93,6 +93,7 @@ class AppSettings:
     # New Configuration Fields
     branch_code: str = ""
     pos_number: str = ""
+    api_base_url: str = ""
     # Path Configuration (Standardized)
     release_path: str = r"C:\ProgramData\RMS_Plus\ReleaseNumber.txt"
     env_config_path: str = r"C:\Workspaces\DBS\RMS\RMS.CashierServer\appsettings.json"

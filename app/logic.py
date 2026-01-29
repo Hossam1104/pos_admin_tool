@@ -193,10 +193,59 @@ class BatchRunner:
             updates["branch_id"] = int(data.get("MainServerBranchId", 0))
             updates["pos_id"] = int(data.get("MainServerPosId", 0))
 
-            # Client Logic
-            main_ip = data.get("MainServerIP", "")
-            if "10.10.10.181" in main_ip:
-                updates["client_name"] = "DBS_MAIN"
+            # Client Detection Logic
+            client_name = None
+
+            # Try 1: Read from UI appsettings.json
+            ui_path = Path(r"C:\Workspaces\DBS\RMS\RMS.CashierUI\appsettings.json")
+            if ui_path.exists():
+                try:
+                    with open(ui_path, "r", encoding="utf-8") as f_ui:
+                        ui_data = json.load(f_ui)
+                        client_name = ui_data.get("Settings", {}).get("TheClient")
+                        if client_name:
+                            self._log_output(
+                                f"[*] Detected client from UI settings: {client_name}"
+                            )
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to read UI appsettings for client detection: {e}"
+                    )
+
+            # Try 2: Fallback to IP-based detection if still not found
+            if not client_name:
+                main_ip = data.get("MainServerIP", "")
+                if "10.10.10.181" in main_ip:
+                    client_name = "DBS_MAIN"
+                    self._log_output(
+                        f"[*] Falling back to IP-based client detection: {client_name}"
+                    )
+
+            if client_name:
+                updates["client_name"] = client_name
+
+            # API URL Detection Logic
+            api_url = None
+            branch_settings_path = Path(
+                r"C:\Workspaces\DBS\RMS\RMS.BranchServer\appsettings.json"
+            )
+            if branch_settings_path.exists():
+                try:
+                    with open(branch_settings_path, "r", encoding="utf-8") as f_br:
+                        br_data = json.load(f_br)
+                        api_url = br_data.get("BranchSettings", {}).get("MainBaseUrl")
+                        if api_url:
+                            # Normalize URL (remove trailing slash for internal consistency if needed,
+                            # but UI/Logic usually handles it with rstrip)
+                            api_url = api_url.rstrip("/")
+                            self._log_output(
+                                f"[*] Detected API URL from Branch settings: {api_url}"
+                            )
+                            updates["api_base_url"] = api_url
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to read Branch appsettings for API URL detection: {e}"
+                    )
 
             return True, updates
 
