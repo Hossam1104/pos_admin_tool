@@ -124,6 +124,71 @@ class BatchRunner(QObject):
             logger.error(f"Failed to read release number: {e}")
             return "ERR"
 
+    def extract_pos_setup(
+        self, client_name: str, release_number: str
+    ) -> Tuple[bool, str]:
+        """
+        Zip the RMS_Plus folder and move it to D:\\ drive.
+        Naming: <client_name>_POS_Release_v.<release_number>.zip
+        Returns (success, message)
+        """
+        import zipfile
+
+        source_folder = Path(r"C:\ProgramData\RMS_Plus")
+        zip_name = f"{client_name}_POS_Release_v.{release_number}.zip"
+        temp_zip_path = source_folder.parent / zip_name  # Create in ProgramData first
+        destination_path = Path(r"D:") / zip_name
+
+        self._log_output("[*] Starting POS Setup extraction...")
+        self._log_output(f"    Source: {source_folder}")
+        self._log_output(f"    Destination: {destination_path}")
+
+        # Validate source exists
+        if not source_folder.exists():
+            error_msg = f"Source folder not found: {source_folder}"
+            self._log_output(error_msg, is_error=True)
+            return False, error_msg
+
+        # Validate D:\ drive exists
+        if not Path(r"D:").exists():
+            error_msg = "D:\\ drive not found"
+            self._log_output(error_msg, is_error=True)
+            return False, error_msg
+
+        try:
+            # Create ZIP
+            self._log_output("[*] Creating ZIP archive...")
+            with zipfile.ZipFile(temp_zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+                for root, dirs, files in os.walk(source_folder):
+                    for file in files:
+                        file_path = Path(root) / file
+                        arcname = file_path.relative_to(source_folder.parent)
+                        zipf.write(file_path, arcname)
+                        self._log_output(f"    Added: {arcname}")
+
+            self._log_output(f"[*] ZIP created at: {temp_zip_path}")
+
+            # Move to D:\
+            self._log_output("[*] Moving ZIP to D:\\ drive...")
+            if destination_path.exists():
+                destination_path.unlink()  # Remove existing file
+            shutil.move(str(temp_zip_path), str(destination_path))
+
+            success_msg = f"Successfully created: {destination_path}"
+            self._log_output(f"[✔] {success_msg}")
+            return True, success_msg
+
+        except Exception as e:
+            error_msg = f"Failed to create ZIP: {str(e)}"
+            self._log_output(error_msg, is_error=True)
+            # Cleanup temp file if exists
+            if temp_zip_path.exists():
+                try:
+                    temp_zip_path.unlink()
+                except Exception:
+                    pass
+            return False, error_msg
+
     def sqlcmd(
         self, query: str, database: str = "master", timeout: Optional[int] = None
     ) -> Tuple[int, str, str]:

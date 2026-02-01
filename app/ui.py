@@ -82,16 +82,19 @@ class CheckableComboBox(QComboBox):
             QComboBox {
                 background: white;
                 color: black;
-                border: 1px solid #E5E5E5;
+                border: 2px solid #64748B;
                 border-radius: 4px;
                 padding: 5px;
             }
             QComboBox::drop-down {
-                border: none;
-                width: 20px;
+                background-color: #E2E8F0;
+                border-left: 2px solid #64748B;
+                width: 30px;
+                border-top-right-radius: 4px;
+                border-bottom-right-radius: 4px;
             }
             QComboBox::down-arrow {
-                image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0iIzIyMjIyMiI+PHBhdGggZD0iTTcgMTBsNSA1IDUtNXoiLz48L3N2Zz4=");
+                image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzIyMjIyMiI+PHBhdGggZD0iTTcgMTBsNSA1IDUtNXoiLz48L3N2Zz4=");
                 width: 14px;
                 height: 14px;
             }
@@ -363,20 +366,18 @@ class MainController(QObject):
                         # Update settings with new DBs and refresh UI
                         # Use discovered DBs as the source of truth for the NEW instance
                         # Update settings with new DBs
+                        # Update settings with new DBs
                         self.settings.databases = dbs
                         self.config_manager.save()
 
-                        # Selectively update Ops Panel without resetting Service Panel
-                        from PySide6.QtWidgets import QMainWindow
+                        # Emit config_loaded to refresh ALL panels including ConfigurationPanel
+                        self.config_loaded.emit(self.settings)
 
-                        for widget in QApplication.topLevelWidgets():
-                            if isinstance(widget, QMainWindow) and hasattr(
-                                widget, "ops_panel"
-                            ):
-                                widget.ops_panel.load_state(self.settings)
-                                break
+                    else:
+                        self.log_msg.emit("No databases found.", True)
                 except Exception as e:
                     self.log_msg.emit(f"DB Discovery failed: {e}", True)
+
             else:
                 self.log_msg.emit("SQL Connection Failed.", True)
         finally:
@@ -394,9 +395,14 @@ class MainController(QObject):
             # But that might overwrite user preference if not saved.
             # Let's just update the settings object in memory and refresh UI.
             self.settings.services = list(set(self.settings.services + svcs))
+            self.config_manager.save()  # Persist services
             self.config_loaded.emit(self.settings)
         else:
-            self.log_msg.emit("No new services found.", True)
+            self.log_msg.emit(
+                "No new services found.", False
+            )  # Changed to False to not alarm
+            # Provide UI feedback anyway?
+            # self.config_loaded.emit(self.settings) # Optional: refresh just in case
 
     def control_service(self, name: str, action: str):
         self.log_msg.emit(f"Requesting {action} for {name}...", False)
@@ -491,10 +497,7 @@ class ConfigurationPanel(QGroupBox):
 
         svc_layout = QHBoxLayout()
         svc_layout.addWidget(QLabel("Services"))
-        btn_refresh = QPushButton("↻")
-        btn_refresh.setFixedSize(24, 24)
-        btn_refresh.clicked.connect(self.controller.discover_services)
-        svc_layout.addWidget(btn_refresh)
+        # Refresh button moved to input row
         svc_layout.addStretch()
         layout.addLayout(svc_layout, 2, 1)
 
@@ -508,6 +511,9 @@ class ConfigurationPanel(QGroupBox):
         self.backup_path.setMinimumHeight(35)
         btn_browse = QPushButton("...")
         btn_browse.setFixedSize(40, 35)
+        btn_browse.setStyleSheet(
+            f"background-color: {COLORS['INFO']}; color: white; font-weight: bold; border-radius: 4px;"
+        )
         btn_browse.clicked.connect(self.browse_path)
 
         path_layout = QHBoxLayout()
@@ -519,14 +525,47 @@ class ConfigurationPanel(QGroupBox):
             w.setHeight = 35
 
         layout.addWidget(self.db_combo, 3, 0)
-        layout.addWidget(self.svc_combo, 3, 1)
+
+        # Database Layout with Refresh Button
+        db_input_layout = QHBoxLayout()
+        db_input_layout.addWidget(self.db_combo)
+
+        btn_db_refresh = QPushButton()
+        btn_db_refresh.setFixedSize(35, 35)
+        btn_db_refresh.setToolTip("Refresh Databases")
+        # Use Standard Icon
+        from PySide6.QtWidgets import QStyle
+
+        btn_db_refresh.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        btn_db_refresh.setStyleSheet(
+            f"background-color: {COLORS['PRIMARY']}; border-radius: 4px;"
+        )
+        btn_db_refresh.clicked.connect(self.refresh_databases)
+        db_input_layout.addWidget(btn_db_refresh)
+
+        # Service Layout with Refresh Button
+        svc_input_layout = QHBoxLayout()
+        svc_input_layout.addWidget(self.svc_combo)
+
+        btn_refresh = QPushButton()
+        btn_refresh.setFixedSize(35, 35)
+        btn_refresh.setToolTip("Refresh Services")
+        btn_refresh.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        btn_refresh.setStyleSheet(
+            f"background-color: {COLORS['PRIMARY']}; border-radius: 4px;"
+        )
+        btn_refresh.clicked.connect(self.controller.discover_services)
+        svc_input_layout.addWidget(btn_refresh)
+
+        layout.addLayout(db_input_layout, 3, 0)
+        layout.addLayout(svc_input_layout, 3, 1)
         layout.addLayout(path_layout, 3, 2, 1, 2)
 
         # Row 4: Advanced Config Headers (New)
         new_headers = [
-            "Branch Code (4 digits)",
-            "Machine No. (Max 2)",
-            "RMS API Base URL",
+            "Branch Code",
+            "Machine No.",
+            "RMS Base URL",
         ]
         for i, h in enumerate(new_headers):
             lbl = QLabel(h)
@@ -617,6 +656,19 @@ class ConfigurationPanel(QGroupBox):
 
         # Ensure row 6 is not squashed
         layout.setRowStretch(6, 0)
+
+    def refresh_databases(self):
+        instance = self.sql_instance.text()
+        user = self.sql_user.text()
+        password = self.sql_password.text() or self.controller.settings.sql_password
+
+        if not instance:
+            QMessageBox.warning(
+                self, "Missing Info", "Please enter SQL Instance first."
+            )
+            return
+
+        self.controller.test_sql_connection(instance, user, password)
 
     def import_settings(self):
         """Import settings from RMS+ Info file"""
@@ -967,10 +1019,9 @@ class OperationsPanel(QGroupBox):
         self.res_file = QLineEdit()
         btn_res_browse = QPushButton("...")
         btn_res_browse.setFixedSize(40, 30)
-        # Keep neutral for browse
-        btn_res_browse.setStyleSheet(
-            f"background-color: {COLORS['DISABLED']}; color: black;"
-        )
+        # Helper style for Browse Buttons
+        browse_style = f"background-color: {COLORS['INFO']}; color: white; font-weight: bold; border-radius: 4px;"
+        btn_res_browse.setStyleSheet(browse_style)
         btn_res_browse.clicked.connect(self.browse_bak)
         hb_file = QHBoxLayout()
         hb_file.addWidget(self.res_file)
@@ -981,7 +1032,7 @@ class OperationsPanel(QGroupBox):
         self.db_path = QLineEdit()
         btn_db = QPushButton("...")
         btn_db.setFixedSize(40, 30)
-        btn_db.setStyleSheet(f"background-color: {COLORS['DISABLED']}; color: black;")
+        btn_db.setStyleSheet(browse_style)
         btn_db.clicked.connect(lambda: self.browse_folder(self.db_path))
         hb_db = QHBoxLayout()
         hb_db.addWidget(self.db_path)
@@ -1237,7 +1288,8 @@ class MainWindow(QMainWindow):
         self.controller.start_app()
 
     def init_ui(self):
-        self.setWindowTitle("RMS+ | POS Admin Tool v1.0")
+        release_num = self.controller.batch_runner.get_release_number()
+        self.setWindowTitle(f"RMS+ | POS Admin Tool Release {release_num}")
         # Allow resizing smaller than content
         self.setMinimumSize(1200, 800)
         self.showMaximized()
@@ -1395,6 +1447,16 @@ class MainWindow(QMainWindow):
         )
         btn_prereqs.clicked.connect(self.open_prereqs)
 
+        # Extract POS Setup Button
+        btn_extract = QPushButton("Extract POS Setup")
+        btn_extract.setCursor(Qt.PointingHandCursor)
+        btn_extract.setStyleSheet(
+            f"QPushButton {{ background-color: {COLORS['SUCCESS']}; color: white; padding: 10px 20px; border-radius: 25px; font-weight: 900; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}"
+            f"QPushButton:hover {{ background-color: #0D6429; margin-top: -2px; }}"
+            f"QPushButton:pressed {{ background-color: #0A4F20; margin-top: 0px; }}"
+        )
+        btn_extract.clicked.connect(self.extract_pos_setup)
+
         # Docs Button
         btn_docs = QPushButton("Open Documentation")
         btn_docs.setCursor(Qt.PointingHandCursor)
@@ -1408,6 +1470,8 @@ class MainWindow(QMainWindow):
 
         header_layout.addWidget(title_widget)
         header_layout.addStretch()
+        header_layout.addWidget(btn_extract)
+        header_layout.addSpacing(10)
         header_layout.addWidget(btn_prereqs)
         header_layout.addSpacing(10)
         header_layout.addWidget(btn_docs)
@@ -1536,3 +1600,54 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(
                 self, "Error", f"Could not open documentation:\\n{str(e)}"
             )
+
+    def extract_pos_setup(self):
+        """Extract POS Setup - Zip RMS_Plus folder and move to D:\\ drive"""
+        client_name = self.controller.settings.client_name
+        release_number = self.controller.batch_runner.get_release_number()
+
+        if not client_name:
+            QMessageBox.warning(
+                self,
+                "Configuration Required",
+                "Client Name is not configured. Please set the Client Name in Configuration first.",
+            )
+            return
+
+        if release_number in ("N/A", "ERR"):
+            QMessageBox.warning(
+                self,
+                "Release Number Not Found",
+                "Could not read the release number from C:\\ProgramData\\RMS_Plus\\ReleaseNumber.txt",
+            )
+            return
+
+        # Confirm action
+        zip_name = f"{client_name}_POS_Release_v.{release_number}.zip"
+        reply = QMessageBox.question(
+            self,
+            "Extract POS Setup",
+            f"This will create:\nD:\\{zip_name}\n\nProceed?",
+            QMessageBox.Yes | QMessageBox.No,
+        )
+
+        if reply != QMessageBox.Yes:
+            return
+
+        # Run in worker thread to avoid UI freeze
+        def run_extract():
+            return self.controller.batch_runner.extract_pos_setup(
+                client_name, release_number
+            )
+
+        worker = WorkerThread(operation_type="generic", generic_func=run_extract)
+        worker.generic_result.connect(self.on_extract_complete)
+        worker.start()
+        self._extract_worker = worker  # Keep reference to prevent GC
+
+    def on_extract_complete(self, result):
+        success, message = result
+        if success:
+            QMessageBox.information(self, "Success", message)
+        else:
+            QMessageBox.critical(self, "Failed", message)

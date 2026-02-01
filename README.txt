@@ -1,6 +1,6 @@
 # DBS POS Admin Tool (RMS+)
 
-**Version:** 1.0 (Production)  
+**Version:** 1.1 (Production)  
 **Provider:** Digital Business Systems (DBS)  
 
 ---

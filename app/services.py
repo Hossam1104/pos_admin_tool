@@ -4,15 +4,13 @@ Monitors Windows services status with safe shutdown
 
 import subprocess
 import threading
-import time
+from enum import Enum
+
 from typing import List, Dict, Optional
 from PySide6.QtCore import QObject, Signal
 from app.logger import get_logger
 
 logger = get_logger()
-
-
-from enum import Enum
 
 
 class ServiceStatus(Enum):
@@ -60,6 +58,9 @@ class ServiceMonitor(QObject):
                         if svc_name.upper().startswith(
                             "RMS"
                         ) or svc_name.upper().startswith("POS"):
+                            # Fix: Exclude known system services that match the pattern
+                            if svc_name.upper() == "RMSVC":
+                                continue
                             found_services.append(svc_name)
 
             return sorted(list(set(found_services)))

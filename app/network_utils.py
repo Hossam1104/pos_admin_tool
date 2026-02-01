@@ -125,16 +125,17 @@ class EnvironmentDetector:
                 return "UNKNOWN"
 
             # Normalize for comparison (ignore case, maybe trailing slash)
-            base_url_norm = base_url.lower().rstrip("/")
-            test_norm = EnvironmentDetector.URL_TESTING.lower().rstrip("/")
-            prod_norm = EnvironmentDetector.URL_PRODUCTION.lower().rstrip("/")
+            # Port-based detection: Has Port -> TESTING, No Port -> PRODUCTION
+            from urllib.parse import urlparse
 
-            if base_url_norm == test_norm:
-                return "TESTING"
-            elif base_url_norm == prod_norm:
-                return "PRODUCTION"
-            else:
-                logger.warning(f"Unrecognized API URL: {base_url}")
+            try:
+                parsed = urlparse(base_url)
+                if parsed.port:
+                    return "TESTING"
+                else:
+                    return "PRODUCTION"
+            except Exception as e:
+                logger.warning(f"Failed to parse URL for env detection: {e}")
                 return "UNKNOWN"
 
         except Exception as e:
