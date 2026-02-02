@@ -7,6 +7,10 @@ import os
 import shutil
 import time
 import requests
+import ssl
+import urllib3
+from requests.adapters import HTTPAdapter
+from urllib3.util.ssl_ import create_urllib3_context
 from pathlib import Path
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime
@@ -16,6 +20,29 @@ from app.logger import get_logger
 from app.models import OperationResult, Resource, ResourceType, OperationStatus
 
 logger = get_logger()
+
+
+class LegacySSLAdapter(HTTPAdapter):
+    """
+    A custom HTTP Adapter that forces the use of SSL settings allowing
+    unsafe legacy renegotiation (required for older IIS/ASP.NET servers).
+    """
+
+    def init_poolmanager(self, connections, maxsize, block=False):
+        context = create_urllib3_context()
+        # Enable usage of legacy renegotiation (fixing the SSLError)
+        context.options |= ssl.OP_LEGACY_SERVER_CONNECT
+
+        # FIX: Disable hostname checking to allow setting CERT_NONE (requests verify=False)
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        self.poolmanager = urllib3.poolmanager.PoolManager(
+            num_pools=connections,
+            maxsize=maxsize,
+            block=block,
+            ssl_context=context,
+        )
 
 
 class BatchRunner(QObject):
@@ -155,6 +182,19 @@ class BatchRunner(QObject):
             self._log_output(error_msg, is_error=True)
             return False, error_msg
 
+        # Force delete destination if exists (handle Read-Only)
+        if destination_path.exists():
+            try:
+                import stat
+
+                self._log_output(f"[*] Removing existing file: {destination_path}")
+                os.chmod(destination_path, stat.S_IWRITE)
+                destination_path.unlink()
+            except Exception as e:
+                error_msg = f"Failed to delete existing file {destination_path}: {e}"
+                self._log_output(error_msg, is_error=True)
+                return False, error_msg
+
         try:
             # Create ZIP
             self._log_output("[*] Creating ZIP archive...")
@@ -164,14 +204,14 @@ class BatchRunner(QObject):
                         file_path = Path(root) / file
                         arcname = file_path.relative_to(source_folder.parent)
                         zipf.write(file_path, arcname)
-                        self._log_output(f"    Added: {arcname}")
+                        # Reduced verbosity to prevent UI freeze
+                        # self._log_output(f"    Added: {arcname}")
 
             self._log_output(f"[*] ZIP created at: {temp_zip_path}")
 
             # Move to D:\
             self._log_output("[*] Moving ZIP to D:\\ drive...")
-            if destination_path.exists():
-                destination_path.unlink()  # Remove existing file
+            # Destination already cleared above
             shutil.move(str(temp_zip_path), str(destination_path))
 
             success_msg = f"Successfully created: {destination_path}"
@@ -346,7 +386,15 @@ class BatchRunner(QObject):
             if json_data is not None:
                 req_kwargs["json"] = json_data
 
-            response = requests.request(method, full_url, **req_kwargs)
+            # Create a session with our Legacy Adapter
+            with requests.Session() as session:
+                session.mount("https://", LegacySSLAdapter())
+                session.verify = (
+                    False  # Disable verification for internal legacy servers if needed
+                )
+
+                # Execute Request
+                response = session.request(method, full_url, **req_kwargs)
 
             self._log_output(f"    Status: {response.status_code}")
 
@@ -460,9 +508,12 @@ class BatchRunner(QObject):
 
         try:
             # Enforce detailed error capability
-            response = requests.get(
-                full_url, timeout=15, verify=False
-            )  # SSL Verify False to avoid cert issues in custom environments
+            # Use Legacy Adapter for Branch Verification as well
+            with requests.Session() as session:
+                session.mount("https://", LegacySSLAdapter())
+                # SSL Verify False to avoid cert issues in custom environments
+                response = session.get(full_url, timeout=15, verify=False)
+
             self._log_output(f"    Status: {response.status_code}")
 
             if response.status_code == 200:
@@ -597,8 +648,9 @@ class BatchRunner(QObject):
         self._log_output(f"[*] Dropping database: {database_name}")
 
         try:
+            # Force drop by killing connections first
             returncode, stdout, stderr = self.sqlcmd(
-                f"DROP DATABASE IF EXISTS [{database_name}]"
+                f"ALTER DATABASE [{database_name}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [{database_name}]"
             )
 
             success = returncode == 0
@@ -616,14 +668,25 @@ class BatchRunner(QObject):
             return False, error_msg
 
     def delete_folder(self, folder_path: str) -> Tuple[bool, str]:
-        """Delete a folder recursively"""
+        """Delete a folder recursively with read-only handling"""
+        import stat
+
+        def remove_readonly(func, path, _):
+            """Clear the read-only bit and reattempt the removal"""
+            try:
+                os.chmod(path, stat.S_IWRITE)
+                func(path)
+            except Exception as e:
+                logger.error(f"Failed to remove read-only attribute: {e}")
+
         folder = Path(folder_path)
         if not folder.exists():
             return True, f"Folder does not exist: {folder}"
 
         try:
             self._log_output(f"[*] Deleting folder: {folder}")
-            shutil.rmtree(folder)
+            # onerror handler handles read-only git files
+            shutil.rmtree(folder, onerror=remove_readonly)
             return True, f"Folder deleted: {folder}"
 
         except Exception as e:

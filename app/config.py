@@ -13,6 +13,8 @@ from app.logger import get_logger
 
 logger = get_logger()
 
+TOOL_VERSION = "1.1"
+
 # ===== CRYPTO LOGIC =====
 
 try:

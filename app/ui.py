@@ -28,7 +28,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QScrollArea,
 )
-from PySide6.QtCore import Qt, QTimer, Signal, QThread, QObject, QUrl
+from PySide6.QtCore import Qt, QTimer, Signal, QThread, QObject, QUrl, QSize
 from PySide6.QtGui import QDesktopServices, QIcon
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 
@@ -43,21 +43,21 @@ logger = get_logger()
 # ===== THEME & CONSTANTS =====
 
 COLORS = {
-    "PRIMARY": "#0066CC",  # Deep Vibrant Blue
-    "PRIMARY_HOVER": "#0052A3",
-    "PRIMARY_PRESSED": "#003D7A",
-    "SECONDARY_TEAL": "#0F766E",  # Teal for Backup (Darker for white text)
-    "SECONDARY_AMBER": "#B45309",  # Amber for Restore
-    "DISABLED": "#CBD5E1",  # Gray-Blue
-    "SUCCESS": "#15803D",  # Strong Green
-    "WARNING": "#B45309",  # Amber
-    "DANGER": "#DC2626",  # Vivid Red
-    "BG": "#F0F9FF",  # Very Light Azure Tint (Colorful yet clean)
-    "CARD_BG": "#FFFFFF",  # White
-    "BORDER": "#94A3B8",  # Slate Border
-    "TEXT_PRI": "#000000",  # Pure Black
-    "TEXT_SEC": "#334155",  # Slate Gray
-    "INFO": "#0284C7",  # Sky Blue for Info/Actions
+    "PRIMARY": "#0078D4",  # High-Visibility Blue
+    "PRIMARY_HOVER": "#106EBE",
+    "PRIMARY_PRESSED": "#005A9E",
+    "SECONDARY_TEAL": "#008272",
+    "SECONDARY_AMBER": "#FFB900",
+    "DISABLED": "#323130",
+    "SUCCESS": "#107C10",
+    "WARNING": "#D83B01",
+    "DANGER": "#A4262C",
+    "BG": "#0A0A0A",  # Pure Deep Dark
+    "CARD_BG": "#161616",  # Slightly lighter charcoal
+    "BORDER": "#333333",  # Subtle border
+    "TEXT_PRI": "#FFFFFF",  # High contrast white
+    "TEXT_SEC": "#BABABA",  # Readable gray
+    "INFO": "#00A2AD",
 }
 
 # ===== CUSTOM WIDGETS =====
@@ -80,21 +80,21 @@ class CheckableComboBox(QComboBox):
         self.setStyleSheet(
             """
             QComboBox {
-                background: white;
-                color: black;
-                border: 2px solid #64748B;
+                background: #0F172A;
+                color: white;
+                border: 1px solid #334155;
                 border-radius: 4px;
                 padding: 5px;
             }
             QComboBox::drop-down {
-                background-color: #E2E8F0;
-                border-left: 2px solid #64748B;
+                background-color: #3B82F6; /* Blue Dropdown Button */
+                border-left: 1px solid #334155;
                 width: 30px;
                 border-top-right-radius: 4px;
                 border-bottom-right-radius: 4px;
             }
             QComboBox::down-arrow {
-                image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzIyMjIyMiI+PHBhdGggZD0iTTcgMTBsNSA1IDUtNXoiLz48L3N2Zz4=");
+                image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZmZmZiI+PHBhdGggZD0iTTcgMTBsNSA1IDUtNXoiLz48L3N2Zz4="); /* White Arrow */
                 width: 14px;
                 height: 14px;
             }
@@ -104,30 +104,35 @@ class CheckableComboBox(QComboBox):
         view = self.view()
         view.setStyleSheet(
             """
+            QListView {
+                background-color: #161616;
+                border: 1px solid #333333;
+                outline: none;
+            }
             QListView::item {
-                background: white;
-                color: black;
-                padding: 6px;
-                border-bottom: 1px solid #F3F4F6;
+                background: #161616;
+                color: #FFFFFF;
+                padding: 8px;
+                border-bottom: 1px solid #2A2A2A;
             }
             QListView::item:selected {
-                background: #3B82F6;
+                background: #0078D4;
                 color: white;
             }
             QListView::indicator {
                 width: 18px;
                 height: 18px;
-                border: 1px solid #94A3B8;
-                background: white;
-                border-radius: 3px;
+                border: 1px solid #444444;
+                background: #222222;
+                border-radius: 4px;
             }
             QListView::indicator:checked {
                 background-color: #107C10;
                 image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik05IDE2LjE3TDQuODMgMTJsLTEuNDIgMS40MUw5IDE5IDIxIDdsLTEuNDEtMS40MXoiLz48L3N2Zz4=");
             }
             QListView::item:hover {
-                background: #F3F4F6;
-                color: black;
+                background: #2A2A2A;
+                color: white;
             }
         """
         )
@@ -463,7 +468,9 @@ class ConfigurationPanel(QGroupBox):
         headers = ["Client Name", "SQL Instance", "SQL User", "Password"]
         for i, h in enumerate(headers):
             lbl = QLabel(h)
-            lbl.setStyleSheet(f"font-weight: bold; color: {COLORS['TEXT_SEC']};")
+            lbl.setStyleSheet(
+                f"font-weight: 600; color: {COLORS['TEXT_SEC']}; font-size: 13px;"
+            )
             layout.addWidget(lbl, 0, i)
             layout.setColumnStretch(i, 1)
 
@@ -522,7 +529,7 @@ class ConfigurationPanel(QGroupBox):
 
         for w in [self.db_combo, self.svc_combo]:
             w.setMinimumWidth(200)
-            w.setHeight = 35
+            w.setFixedHeight(35)
 
         layout.addWidget(self.db_combo, 3, 0)
 
@@ -530,13 +537,20 @@ class ConfigurationPanel(QGroupBox):
         db_input_layout = QHBoxLayout()
         db_input_layout.addWidget(self.db_combo)
 
+        # Load Refresh Icon
+        from app.utils import resource_path
+
+        refresh_icon_path = resource_path(
+            os.path.join("assets", "icons", "white_refresh.svg")
+        )
+        refresh_icon = QIcon(refresh_icon_path)
+
         btn_db_refresh = QPushButton()
         btn_db_refresh.setFixedSize(35, 35)
         btn_db_refresh.setToolTip("Refresh Databases")
-        # Use Standard Icon
-        from PySide6.QtWidgets import QStyle
-
-        btn_db_refresh.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        # Use White Refresh Icon
+        btn_db_refresh.setIcon(refresh_icon)
+        btn_db_refresh.setIconSize(QSize(20, 20))
         btn_db_refresh.setStyleSheet(
             f"background-color: {COLORS['PRIMARY']}; border-radius: 4px;"
         )
@@ -550,7 +564,8 @@ class ConfigurationPanel(QGroupBox):
         btn_refresh = QPushButton()
         btn_refresh.setFixedSize(35, 35)
         btn_refresh.setToolTip("Refresh Services")
-        btn_refresh.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        btn_refresh.setIcon(refresh_icon)
+        btn_refresh.setIconSize(QSize(20, 20))
         btn_refresh.setStyleSheet(
             f"background-color: {COLORS['PRIMARY']}; border-radius: 4px;"
         )
@@ -570,14 +585,14 @@ class ConfigurationPanel(QGroupBox):
         for i, h in enumerate(new_headers):
             lbl = QLabel(h)
             lbl.setStyleSheet(
-                f"font-weight: bold; color: {COLORS['TEXT_SEC']}; margin-top: 10px;"
+                f"font-weight: 600; color: {COLORS['TEXT_SEC']}; margin-top: 10px; font-size: 13px;"
             )
             layout.addWidget(lbl, 4, i)
 
         # Server Status Header (Col 3)
         lbl_status = QLabel("Main Server Status")
         lbl_status.setStyleSheet(
-            f"font-weight: bold; color: {COLORS['TEXT_SEC']}; margin-top: 10px;"
+            f"font-weight: 600; color: {COLORS['TEXT_SEC']}; margin-top: 10px; font-size: 13px;"
         )
         layout.addWidget(lbl_status, 4, 3)
 
@@ -603,7 +618,7 @@ class ConfigurationPanel(QGroupBox):
         # Server Status Indicator
         self.lbl_server_status = QLabel("Checking...")
         self.lbl_server_status.setStyleSheet(
-            "font-weight: bold; color: gray; border: 1px solid #ccc; border-radius: 4px; padding: 4px; background: white;"
+            f"font-weight: 600; color: #FFFFFF; border: 1px solid {COLORS['BORDER']}; border-radius: 6px; padding: 4px; background: #222;"
         )
         self.lbl_server_status.setAlignment(Qt.AlignCenter)
 
@@ -634,7 +649,8 @@ class ConfigurationPanel(QGroupBox):
         btn_import = QPushButton("Import from RMS+")
         btn_import.setMinimumHeight(40)
         btn_import.setStyleSheet(
-            f"background-color: {COLORS['PRIMARY']}; color: white; border-radius: 4px;"
+            f"QPushButton {{ background-color: {COLORS['PRIMARY']}; color: white; border-radius: 20px; font-weight: 900; }}"
+            f"QPushButton:hover {{ background-color: {COLORS['PRIMARY_HOVER']}; }}"
         )
         btn_import.clicked.connect(self.import_settings)
 
@@ -642,7 +658,8 @@ class ConfigurationPanel(QGroupBox):
         btn_verify = QPushButton("Verify Branch")
         btn_verify.setMinimumHeight(40)
         btn_verify.setStyleSheet(
-            f"background-color: {COLORS['INFO']}; color: white; font-weight: bold; border-radius: 4px;"
+            f"QPushButton {{ background-color: {COLORS['INFO']}; color: white; font-weight: 900; border-radius: 20px; }}"
+            f"QPushButton:hover {{ background-color: #008992; }}"
         )
         btn_verify.clicked.connect(self.verify_branch)
 
@@ -702,7 +719,7 @@ class ConfigurationPanel(QGroupBox):
         color = COLORS["SUCCESS"] if is_connected else COLORS["DANGER"]
         self.lbl_server_status.setText(text)
         self.lbl_server_status.setStyleSheet(
-            f"font-weight: bold; color: white; border: 1px solid {color}; border-radius: 4px; padding: 4px; background: {color};"
+            f"font-weight: 900; color: white; border: none; border-radius: 6px; padding: 4px; background: {color};"
         )
 
     def load_state(self, settings: AppSettings):
@@ -845,7 +862,7 @@ class ServiceControlPanel(QGroupBox):
         frame = QFrame()
         frame.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
         frame.setStyleSheet(
-            f"background-color: white; border: 1px solid {COLORS['BORDER']}; border-radius: 5px;"
+            f"background-color: #202020; border: 1px solid {COLORS['BORDER']}; border-radius: 8px;"
         )
         frame.setFixedHeight(110)
 
@@ -856,7 +873,7 @@ class ServiceControlPanel(QGroupBox):
 
         lbl_status = QLabel("Checking...")
         lbl_status.setAlignment(Qt.AlignRight)
-        lbl_status.setStyleSheet("color: gray; border: none;")
+        lbl_status.setStyleSheet(f"color: {COLORS['TEXT_SEC']}; border: none;")
 
         hbox_top = QHBoxLayout()
         hbox_top.addWidget(lbl_name)
@@ -974,8 +991,8 @@ class OperationsPanel(QGroupBox):
         # LEFT: BACKUP
         grp_backup = QGroupBox("Backup")
         grp_backup.setStyleSheet(
-            f"QGroupBox {{ border: 2px solid {COLORS['SECONDARY_TEAL']}; }} "
-            f"QGroupBox::title {{ color: {COLORS['SECONDARY_TEAL']}; }}"
+            f"QGroupBox {{ border: 1px solid {COLORS['SECONDARY_TEAL']}; background-color: #101F1F; }} "
+            f"QGroupBox::title {{ color: {COLORS['SECONDARY_TEAL']}; font-weight: 900; }}"
         )
         l_backup = QVBoxLayout(grp_backup)
 
@@ -998,8 +1015,8 @@ class OperationsPanel(QGroupBox):
         # RIGHT: RESTORE
         grp_restore = QGroupBox("Restore")
         grp_restore.setStyleSheet(
-            f"QGroupBox {{ border: 2px solid {COLORS['SECONDARY_AMBER']}; }} "
-            f"QGroupBox::title {{ color: {COLORS['SECONDARY_AMBER']}; }}"
+            f"QGroupBox {{ border: 1px solid {COLORS['SECONDARY_AMBER']}; background-color: #1F1B10; }} "
+            f"QGroupBox::title {{ color: {COLORS['SECONDARY_AMBER']}; font-weight: 900; }}"
         )
         l_restore = QGridLayout(grp_restore)
 
@@ -1068,7 +1085,7 @@ class OperationsPanel(QGroupBox):
             chk = QCheckBox(f"{db} Database")
             chk.setObjectName(db)
             chk.setStyleSheet(
-                "QCheckBox { font-weight: bold; color: black; } QCheckBox::indicator { width: 15px; height: 15px; border: 1px solid #888; background: white; } QCheckBox::indicator:checked { background: #107C10; }"
+                f"QCheckBox {{ font-weight: 600; color: white; }} QCheckBox::indicator {{ width: 18px; height: 18px; border: 1px solid {COLORS['BORDER']}; background: #222; border-radius: 4px; }} QCheckBox::indicator:checked {{ background: {COLORS['SUCCESS']}; image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik05IDE2LjE3TDQuODMgMTJsLTEuNDIgMS40MUw5IDE5IDIxIDdsLTEuNDEtMS40MXoiLz48L3N2Zz4='); }}"
             )
             chk.setChecked(True)
             self.chk_dbs.append(chk)
@@ -1081,7 +1098,7 @@ class OperationsPanel(QGroupBox):
                 chk = QCheckBox(name)
                 chk.setObjectName(name)
                 chk.setStyleSheet(
-                    "QCheckBox { font-weight: bold; color: black; } QCheckBox::indicator { width: 15px; height: 15px; border: 1px solid #888; background: white; } QCheckBox::indicator:checked { background: #107C10; }"
+                    f"QCheckBox {{ font-weight: 600; color: white; }} QCheckBox::indicator {{ width: 18px; height: 18px; border: 1px solid {COLORS['BORDER']}; background: #222; border-radius: 4px; }} QCheckBox::indicator:checked {{ background: {COLORS['SUCCESS']}; image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik05IDE2LjE3TDQuODMgMTJsLTEuNDIgMS40MUw5IDE5IDIxIDdsLTEuNDEtMS40MXoiLz48L3N2Zz4='); }}"
                 )
                 chk.setChecked(True)
                 self.chk_configs.append(chk)
@@ -1152,7 +1169,7 @@ class CleanupPanel(QGroupBox):
         self.controller = controller
         # Distinct Red Border for Danger Zone
         self.setStyleSheet(
-            f"QGroupBox {{ border: 2px solid {COLORS['DANGER']}; margin-top: 1em; background-color: #FEF2F2; }} "
+            f"QGroupBox {{ border: 1px solid {COLORS['DANGER']}; margin-top: 1em; background-color: #1A0A0A; }} "
             f"QGroupBox::title {{ color: {COLORS['DANGER']}; font-weight: 900; subcontrol-origin: margin; left: 10px; padding: 0 5px; }}"
         )
 
@@ -1173,8 +1190,11 @@ class CleanupPanel(QGroupBox):
         # Safety Checkbox
         self.chk_confirm = QCheckBox("I understand the risks")
         self.chk_confirm.setStyleSheet(
-            f"color: {COLORS['TEXT_PRI']}; font-weight: bold;"
+            f"QCheckBox {{ font-weight: 900; color: {COLORS['DANGER']}; font-size: 13px; }} "
+            f"QCheckBox::indicator {{ width: 22px; height: 22px; border: 2px solid {COLORS['DANGER']}; background: #2D1A1A; border-radius: 4px; }} "
+            f"QCheckBox::indicator:checked {{ background: {COLORS['DANGER']}; image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik05IDE2LjE3TDQuODMgMTJsLTEuNDIgMS40MUw5IDE5IDIxIDdsLTEuNDEtMS40MXoiLz48L3N2Zz4='); }}"
         )
+        self.chk_confirm.setCursor(Qt.PointingHandCursor)
         self.chk_confirm.stateChanged.connect(self.on_check_changed)
 
         # Action Buttons
@@ -1183,8 +1203,9 @@ class CleanupPanel(QGroupBox):
         self.btn_cleanup.clicked.connect(self.run_cleanup)
         self.btn_cleanup.setStyleSheet(
             f"""
-            QPushButton {{ background-color: {COLORS['DANGER']}; color: white; border: none; font-weight: bold; border-radius: 4px; padding: 8px; }}
-            QPushButton:disabled {{ background-color: {COLORS['DISABLED']}; color: black; }}
+            QPushButton {{ background-color: {COLORS['DANGER']}; color: white; border: none; font-weight: bold; border-radius: 6px; padding: 10px; }}
+            QPushButton:hover {{ background-color: #C53030; }}
+            QPushButton:disabled {{ background-color: #2D1A1A; color: #666; }}
             """
         )
 
@@ -1193,8 +1214,9 @@ class CleanupPanel(QGroupBox):
         self.btn_uninstall_branch.clicked.connect(self.run_uninstall_branch)
         self.btn_uninstall_branch.setStyleSheet(
             f"""
-            QPushButton {{ background-color: {COLORS['DANGER']}; color: white; border: none; font-weight: bold; border-radius: 4px; padding: 8px; }}
-            QPushButton:disabled {{ background-color: {COLORS['DISABLED']}; color: black; }}
+            QPushButton {{ background-color: {COLORS['DANGER']}; color: white; border: none; font-weight: bold; border-radius: 6px; padding: 10px; }}
+            QPushButton:hover {{ background-color: #C53030; }}
+            QPushButton:disabled {{ background-color: #2D1A1A; color: #666; }}
             """
         )
 
@@ -1203,8 +1225,9 @@ class CleanupPanel(QGroupBox):
         self.btn_uninstall_pos.clicked.connect(self.run_uninstall_pos)
         self.btn_uninstall_pos.setStyleSheet(
             f"""
-            QPushButton {{ background-color: {COLORS['DANGER']}; color: white; border: none; font-weight: bold; border-radius: 4px; padding: 8px; }}
-            QPushButton:disabled {{ background-color: {COLORS['DISABLED']}; color: black; }}
+            QPushButton {{ background-color: {COLORS['DANGER']}; color: white; border: none; font-weight: bold; border-radius: 6px; padding: 10px; }}
+            QPushButton:hover {{ background-color: #C53030; }}
+            QPushButton:disabled {{ background-color: #2D1A1A; color: #666; }}
             """
         )
 
@@ -1280,6 +1303,7 @@ class CleanupPanel(QGroupBox):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setObjectName("mainWindow")
         self.controller = MainController()
         self.init_ui()
         self.bind_controller()
@@ -1287,9 +1311,16 @@ class MainWindow(QMainWindow):
         # Startup
         self.controller.start_app()
 
+        # Auto-Update Check (Silent)
+        QTimer.singleShot(2000, lambda: self.check_for_updates(silent=True))
+
     def init_ui(self):
+        from app.config import TOOL_VERSION
+
         release_num = self.controller.batch_runner.get_release_number()
-        self.setWindowTitle(f"RMS+ | POS Admin Tool Release {release_num}")
+        self.setWindowTitle(
+            f"RMS+ | POS Admin Tool v{TOOL_VERSION} (POS Release {release_num})"
+        )
         # Allow resizing smaller than content
         self.setMinimumSize(1200, 800)
         self.showMaximized()
@@ -1303,21 +1334,24 @@ class MainWindow(QMainWindow):
 
         self.setStyleSheet(
             f"""
-            QMainWindow {{
+            QMainWindow#mainWindow, QWidget#centralWidget {{
                 background-color: {COLORS['BG']};
-                font-family: 'Segoe UI', sans-serif;
+                font-family: 'Segoe UI Variable', 'Segoe UI', sans-serif;
                 font-size: 14px;
             }}
             QLabel {{
                 color: {COLORS['TEXT_PRI']};
-                font-family: 'Segoe UI', sans-serif;
             }}
             QLineEdit, QTextEdit, QComboBox {{
-                background-color: white;
+                background-color: #202020;
                 border: 1px solid {COLORS['BORDER']};
                 border-radius: 4px;
                 padding: 6px;
                 color: {COLORS['TEXT_PRI']};
+                selection-background-color: {COLORS['PRIMARY']};
+            }}
+            QLineEdit:focus, QComboBox:focus {{
+                border: 1px solid {COLORS['PRIMARY']};
             }}
             QPushButton {{
                 background-color: {COLORS['PRIMARY']};
@@ -1325,7 +1359,7 @@ class MainWindow(QMainWindow):
                 border: none;
                 border-radius: 6px;
                 padding: 8px 16px;
-                font-weight: bold;
+                font-weight: 600;
                 font-size: 14px;
             }}
             QPushButton:hover {{
@@ -1336,53 +1370,93 @@ class MainWindow(QMainWindow):
             }}
             QPushButton:disabled {{
                 background-color: {COLORS['DISABLED']};
-                color: #F3F4F6;
+                color: #666666;
             }}
             QGroupBox {{
-                font-weight: bold;
-                border: 2px solid {COLORS['BORDER']};
+                font-weight: 800;
+                font-size: 15px;
+                border: 1px solid {COLORS['BORDER']};
                 border-radius: 8px;
-                margin-top: 1.2em;
+                margin-top: 25px;
                 background-color: {COLORS['CARD_BG']};
+                padding: 15px;
             }}
             QGroupBox::title {{
                 subcontrol-origin: margin;
+                subcontrol-position: top left;
                 left: 10px;
-                padding: 0 5px;
-                color: {COLORS['PRIMARY']}; /* Default Header Color */
+                padding: 0 10px;
+                color: {COLORS['PRIMARY']};
+                text-transform: uppercase;
+                letter-spacing: 1px;
             }}
             QComboBox::drop-down {{
                 border: none;
-                width: 24px;
-                subcontrol-origin: padding;
-                subcontrol-position: top right;
+                width: 30px;
+                background: #333333;
+                border-top-right-radius: 4px;
+                border-bottom-right-radius: 4px;
             }}
             QComboBox::down-arrow {{
-                image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0iIzIyMjIyMiI+PHBhdGggZD0iTTcgMTBsNSA1IDUtNXoiLz48L3N2Zz4=");
+                image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik03IDEwbNSA1IDUtNXoiLz48L3N2Zz4=");
                 width: 14px;
                 height: 14px;
+            }}
+            QScrollArea {{
+                border: none;
+                background-color: transparent;
+            }}
+            QScrollBar:vertical {{
+                border: none;
+                background: {COLORS['BG']};
+                width: 12px;
+                margin: 0px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: #444444;
+                min-height: 20px;
+                border: none;
+                border-radius: 6px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background: #555555;
+            }}
+            QMessageBox {{
+                background-color: #161616;
+                color: #FFFFFF;
+            }}
+            QMessageBox QLabel {{
+                color: #FFFFFF;
+                font-size: 14px;
+            }}
+            QMessageBox QPushButton {{
+                min-width: 80px;
+                min-height: 25px;
             }}
             """
         )
 
-        # Scroll Area Wrapper
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        # Main Container (Not Scrollable)
+        main_container = QWidget()
+        main_container.setObjectName("mainWindowContainer")
+        self.setCentralWidget(main_container)
 
-        central = QWidget()
-        # Enforce 1600px width on content
-        central.setMinimumWidth(1600)
+        # Top Level Layout (Vertical)
+        # Header (Fixed) -> Scroll Area (Flexible)
+        root_layout = QVBoxLayout(main_container)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
 
-        main_layout = QVBoxLayout(central)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
-
-        # Header Section
+        # ==========================
+        # 1. HEADER SECTION (FIXED)
+        # ==========================
         header_widget = QWidget()
+        # Add background color to header to ensure opacity over content if needed (though layout prevents overlap)
+        header_widget.setStyleSheet(
+            f"background-color: {COLORS['BG']}; border-bottom: 1px solid {COLORS['BORDER']};"
+        )
         header_layout = QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(0, 0, 0, 5)
+        header_layout.setContentsMargins(20, 10, 20, 15)  # Comfortable padding
 
         # Title Block
         title_widget = QWidget()
@@ -1392,12 +1466,16 @@ class MainWindow(QMainWindow):
 
         lbl_title = QLabel("Digital Business Systems (DBS)")
         lbl_title.setStyleSheet(
-            f"font-size: 26px; font-weight: 900; color: {COLORS['PRIMARY']}; letter-spacing: 0.5px;"
+            "font-size: 28px; font-weight: 900; color: #FFFFFF; letter-spacing: 1px;"
         )
 
-        lbl_subtitle = QLabel("RMS+ POS Admin Tool - Enterprise Edition")
+        from app.config import TOOL_VERSION
+
+        lbl_subtitle = QLabel(
+            f"RMS+ POS Admin Tool v{TOOL_VERSION} - Enterprise Edition"
+        )
         lbl_subtitle.setStyleSheet(
-            f"font-size: 13px; font-weight: bold; color: {COLORS['TEXT_SEC']}; margin-top: -2px;"
+            f"font-size: 14px; font-weight: 400; color: {COLORS['TEXT_SEC']}; margin-top: -5px;"
         )
 
         # Release Info
@@ -1407,11 +1485,10 @@ class MainWindow(QMainWindow):
             f"font-size: 12px; font-weight: 600; color: {COLORS['TEXT_SEC']}; margin-top: 2px;"
         )
 
-        # Environment Badge (New)
+        # Environment Badge
         from app.network_utils import ConnectivityMonitor, EnvironmentDetector
 
         # Detect Environment
-        # Use configured path from settings
         env_path = self.controller.settings.env_config_path
         self.env_type = EnvironmentDetector.detect(env_path)
         env_color = (
@@ -1437,6 +1514,7 @@ class MainWindow(QMainWindow):
 
         title_layout.addWidget(meta_row)
 
+        # Buttons
         # POS Prerequisites Button
         btn_prereqs = QPushButton("POS Prerequisites")
         btn_prereqs.setCursor(Qt.PointingHandCursor)
@@ -1460,7 +1538,6 @@ class MainWindow(QMainWindow):
         # Docs Button
         btn_docs = QPushButton("Open Documentation")
         btn_docs.setCursor(Qt.PointingHandCursor)
-        # Vibrant Solid Style
         btn_docs.setStyleSheet(
             f"QPushButton {{ background-color: {COLORS['PRIMARY']}; color: white; padding: 10px 20px; border-radius: 25px; font-weight: 900; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}"
             f"QPushButton:hover {{ background-color: {COLORS['PRIMARY_HOVER']}; margin-top: -2px; }}"
@@ -1468,15 +1545,51 @@ class MainWindow(QMainWindow):
         )
         btn_docs.clicked.connect(self.open_docs)
 
+        # Update Button
+        btn_update = QPushButton("Check for Updates")
+        btn_update.setCursor(Qt.PointingHandCursor)
+        btn_update.setStyleSheet(
+            f"QPushButton {{ background-color: {COLORS['SECONDARY_TEAL']}; color: white; padding: 10px 20px; border-radius: 25px; font-weight: 900; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}"
+            f"QPushButton:hover {{ background-color: #0D9488; margin-top: -2px; }}"
+            f"QPushButton:pressed {{ background-color: #0F766E; margin-top: 0px; }}"
+        )
+        btn_update.clicked.connect(self.check_for_updates)
+
         header_layout.addWidget(title_widget)
         header_layout.addStretch()
+        header_layout.addWidget(btn_update)
+        header_layout.addSpacing(10)
         header_layout.addWidget(btn_extract)
         header_layout.addSpacing(10)
         header_layout.addWidget(btn_prereqs)
         header_layout.addSpacing(10)
         header_layout.addWidget(btn_docs)
 
-        main_layout.addWidget(header_widget)
+        # Add Header to Root Layout
+        root_layout.addWidget(header_widget)
+
+        # ==========================
+        # 2. SCROLLABLE CONTENT AREA
+        # ==========================
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        # Remove border from scroll area itself to blend in
+        scroll.setFrameShape(QFrame.NoFrame)
+
+        # The widget that holds all the panels
+        scroll_content = QWidget()
+        scroll_content.setObjectName(
+            "centralWidget"
+        )  # Keep specific styling for content area
+        # Enforce minimum width if needed
+        scroll_content.setMinimumWidth(1600)
+
+        # Layout for the scrollable content
+        content_layout = QVBoxLayout(scroll_content)
+        content_layout.setContentsMargins(20, 20, 20, 20)
+        content_layout.setSpacing(15)
 
         # Panels
         self.config_panel = ConfigurationPanel(self.controller)
@@ -1488,18 +1601,23 @@ class MainWindow(QMainWindow):
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
         self.log_area.setStyleSheet(
-            "background: #000; color: #0F0; font-family: Consolas; font-size: 12px;"
+            f"background-color: #0A0A0A; color: #4AF626; border: 1px solid {COLORS['BORDER']}; "
+            "border-radius: 6px; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; padding: 10px;"
         )
-        self.log_area.setMaximumHeight(200)
+        self.log_area.setMaximumHeight(250)
 
-        main_layout.addWidget(self.config_panel)
-        main_layout.addWidget(self.service_panel)
-        main_layout.addWidget(self.ops_panel)
-        main_layout.addWidget(self.cleanup_panel)
-        main_layout.addWidget(self.log_area)
+        # Add all to content layout
+        content_layout.addWidget(self.config_panel)
+        content_layout.addWidget(self.service_panel)
+        content_layout.addWidget(self.ops_panel)
+        content_layout.addWidget(self.cleanup_panel)
+        content_layout.addWidget(self.log_area)
 
-        scroll.setWidget(central)
-        self.setCentralWidget(scroll)
+        # Finalize Scroll Area
+        scroll.setWidget(scroll_content)
+
+        # Add Scroll Area to Root Layout (below header)
+        root_layout.addWidget(scroll)
 
         # Initialize Connectivity Monitor
         self.conn_monitor = ConnectivityMonitor()
@@ -1635,6 +1753,8 @@ class MainWindow(QMainWindow):
             return
 
         # Run in worker thread to avoid UI freeze
+        self.set_busy(True)
+
         def run_extract():
             return self.controller.batch_runner.extract_pos_setup(
                 client_name, release_number
@@ -1643,11 +1763,52 @@ class MainWindow(QMainWindow):
         worker = WorkerThread(operation_type="generic", generic_func=run_extract)
         worker.generic_result.connect(self.on_extract_complete)
         worker.start()
-        self._extract_worker = worker  # Keep reference to prevent GC
+
+        # CRITICAL FIX: Keep reference to prevent garbage collection causing crash
+        self._extract_worker = worker
+
+    def check_for_updates(self, silent=False):
+        from app.updater import UpdateChecker
+        from app.config import TOOL_VERSION
+
+        # Visual feedback
+        if not silent:
+            self.set_busy(True)
+
+        def check():
+            return UpdateChecker.check_update(TOOL_VERSION)
+
+        worker = WorkerThread(operation_type="generic", generic_func=check)
+        worker.generic_result.connect(
+            lambda res: self.on_update_check_complete(res, silent)
+        )
+        worker.start()
+        self._update_worker = worker  # Keep reference
+
+    def on_update_check_complete(self, result, silent):
+        if not silent:
+            self.set_busy(False)
+        is_available, url, tag = result
+
+        if is_available:
+            reply = QMessageBox.question(
+                self,
+                "Update Available",
+                f"A new version ({tag}) is available!\n\nWould you like to download it now?",
+                QMessageBox.Yes | QMessageBox.No,
+            )
+
+            if reply == QMessageBox.Yes and url:
+                QDesktopServices.openUrl(QUrl(url))
+        elif not silent:
+            QMessageBox.information(
+                self, "Up to Date", "You are using the latest version."
+            )
 
     def on_extract_complete(self, result):
-        success, message = result
+        self.set_busy(False)
+        success, msg = result
         if success:
-            QMessageBox.information(self, "Success", message)
+            QMessageBox.information(self, "Success", msg)
         else:
-            QMessageBox.critical(self, "Failed", message)
+            QMessageBox.critical(self, "Export Failed", msg)
